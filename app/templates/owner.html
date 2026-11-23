@@ -6,6 +6,7 @@
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; border-bottom:2px solid #D1DDD6; padding-bottom:10px;">
         <button type="button" class="tab-btn filter-btn active" onclick="openTab('t-orders', this)">📦 Заказы и КУДиР ({{ recs|length }})</button>
         <button type="button" class="tab-btn filter-btn" onclick="openTab('t-stats', this)">📊 Статистика и диаграммы</button>
+        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-promo', this)">🎁 Акции</button>
         <button type="button" class="tab-btn filter-btn" onclick="openTab('t-enc', this)">📚 Энциклопедия</button>
         <button type="button" class="tab-btn filter-btn" onclick="openTab('t-farm', this)">🌾 Обращения ({{ farmers|length }})</button>
         <button type="button" class="tab-btn filter-btn" onclick="openTab('t-sec', this)">🛡️ Безопасность и 2FA</button>
@@ -93,6 +94,48 @@
                 <div style="margin-top:4px; color:#374151;"><b>Смотрел:</b> {{ v.pages|join(" → ") }}</div>
             </div>
             {% else %}<div style="color:#6B7280; font-size:13px;">Визитов пока не зафиксировано.</div>{% endfor %}
+        </div>
+    </div>
+
+    <div id="t-promo" class="tab-pane card" style="display:none; border-top:4px solid #D97706;">
+        <h2 style="color:#133829; margin-bottom:10px;">🎁 Управление акциями и архив (Amazon Deals)</h2>
+        <form action="/owner/promo/save" method="post" style="display:flex; flex-direction:column; gap:10px; background:#FFFBEB; padding:14px; border-radius:8px; border:1px solid #F59E0B; margin-bottom:16px;">
+            <b style="color:#92400E;">Запустить новую акцию (отображается слева от каталога)</b>
+            <input name="title" required placeholder="Заголовок (например: Скидка 10% на все заказы на 1 день!)" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <textarea name="desc" rows="2" required placeholder="Условия акции (например: Всем покупателям скидка в корзине 10% вместо 5%)..." style="padding:8px; border:1px solid #ccc; border-radius:6px;"></textarea>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:13px;">
+                <label>Скидка (%): <input name="discount" type="number" value="10" min="1" max="90" required style="width:70px; padding:6px; border:1px solid #ccc; border-radius:4px;"></label>
+                <label>Начало: <input name="start_date" type="date" required style="padding:6px; border:1px solid #ccc; border-radius:4px;"></label>
+                <label>Окончание: <input name="end_date" type="date" required style="padding:6px; border:1px solid #ccc; border-radius:4px;"></label>
+                <button type="submit" class="btn-cart" style="width:auto; margin:0; padding:8px 16px; background:#D97706;">Опубликовать акцию</button>
+            </div>
+        </form>
+
+        <h3 style="font-size:15px; color:#133829; margin-bottom:8px;">Активные и архивные акции</h3>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for pr in (promos or []) %}
+            <div style="padding:12px; border:1px solid {{ '#F59E0B' if pr.active else '#E5E7EB' }}; border-radius:8px; background:{{ '#FFFBEB' if pr.active else '#F9FAFB' }}; font-size:13px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div><span class="badge" style="background:{{ '#D1FAE5' if pr.active else '#E5E7EB' }}; color:{{ '#065F46' if pr.active else '#4B5563' }};">{{ 'Активна' if pr.active else 'В архиве' }}</span> <b>{{ pr.title }}</b> • Скидка <b>{{ pr.discount }}%</b> ({{ pr.start_date }} — {{ pr.end_date }})</div>
+                    <div style="display:flex; gap:6px;">
+                        {% if pr.active %}<form action="/owner/promo/archive/{{ pr.id }}" method="post" style="margin:0;"><button style="padding:4px 8px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer; font-size:12px;">В архив</button></form>{% endif %}
+                        <button type="button" onclick="let f=document.getElementById('rp-{{ pr.id }}'); f.style.display=f.style.display==='none'?'flex':'none'" style="padding:4px 8px; border:1px solid #2E7D32; background:#ECFDF5; color:#065F46; border-radius:4px; cursor:pointer; font-size:12px;">{{ '✎ Изменить' if pr.active else '↻ Вернуть из архива' }}</button>
+                    </div>
+                </div>
+                <div style="margin-top:4px; color:#4B5563;">{{ pr.desc }}</div>
+                <form id="rp-{{ pr.id }}" action="/owner/promo/save" method="post" style="display:none; flex-direction:column; gap:8px; margin-top:10px; padding-top:10px; border-top:1px dashed #ccc;">
+                    <input type="hidden" name="pid" value="{{ pr.id }}">
+                    <input name="title" value="{{ pr.title }}" required style="padding:6px; border:1px solid #ccc; border-radius:4px;">
+                    <textarea name="desc" rows="2" required style="padding:6px; border:1px solid #ccc; border-radius:4px;">{{ pr.desc }}</textarea>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <label>Скидка %: <input name="discount" type="number" value="{{ pr.discount }}" min="1" max="90" required style="width:65px; padding:5px; border:1px solid #ccc; border-radius:4px;"></label>
+                        <label>С: <input name="start_date" type="date" value="{{ pr.start_date }}" required style="padding:5px; border:1px solid #ccc; border-radius:4px;"></label>
+                        <label>По: <input name="end_date" type="date" value="{{ pr.end_date }}" required style="padding:5px; border:1px solid #ccc; border-radius:4px;"></label>
+                        <button type="submit" class="btn-cart" style="width:auto; margin:0; padding:6px 14px;">Запустить</button>
+                    </div>
+                </form>
+            </div>
+            {% else %}<div style="color:#6B7280; font-size:13px;">Акций пока не создано.</div>{% endfor %}
         </div>
     </div>
 

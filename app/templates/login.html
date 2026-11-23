@@ -1,17 +1,67 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card" style="max-width:400px; margin:30px auto;">
-    <h2 style="color:#133829; margin-bottom:14px;">Вход в аккаунт</h2>
-    {% if request.query_params.get("need2fa") %}<div style="background:#FEF3C7;color:#92400E;padding:8px;border-radius:6px;font-size:13px;margin-bottom:10px;">Код 2FA отправлен на почту владельца</div>{% endif %}
-    {% if err %}<div style="background:#FEE2E2; color:#B91C1C; padding:8px; border-radius:6px; font-size:13px; margin-bottom:10px;">Неверный логин или пароль</div>{% endif %}
-    <form action="/login" method="post" style="display:flex; flex-direction:column; gap:12px;">
-        <input name="login" required placeholder="Ваш Email или логин" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
-        <input name="password" type="password" required placeholder="Пароль" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
-        <input name="otp" maxlength="6" placeholder="Код 2FA (если включена)" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
-        <button class="btn-cart">Войти</button>
+<div class="card" style="max-width:420px; margin:30px auto; padding:24px;">
+    <h2 style="color:#133829; margin-bottom:14px;">Вход в личный кабинет</h2>
+    {% if request.query_params.get('reset') %}<div style="background:#D1FAE5;color:#065F46;padding:8px;border-radius:6px;font-size:13px;margin-bottom:10px;">✓ Пароль успешно изменён! Войдите с новым паролем.</div>{% endif %}
+    {% if err == 'limit' %}<div style="background:#FEE2E2; color:#991B1B; padding:8px; border-radius:6px; font-size:13px; margin-bottom:10px;">Слишком много попыток. Подождите 1 минуту.</div>{% endif %}
+    {% if err == '2fa' %}<div style="background:#FEE2E2; color:#991B1B; padding:8px; border-radius:6px; font-size:13px; margin-bottom:10px;">Неверный или просроченный код 2FA!</div>{% endif %}
+    {% if err == '1' %}<div style="background:#FEE2E2; color:#991B1B; padding:8px; border-radius:6px; font-size:13px; margin-bottom:10px;">Неверный логин или пароль.</div>{% endif %}
+
+    <form id="login-form" action="/login" method="post" style="display:flex; flex-direction:column; gap:10px;">
+        <input type="text" name="website_url" tabindex="-1" autocomplete="off" style="display:none;">
+        <input type="hidden" name="cap_sig" value="{{ cap_sig }}">
+
+        <input id="l-user" name="login" required placeholder="Логин или Email (например, admin)" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input id="l-pass" name="password" type="password" required placeholder="Пароль" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+
+        <div style="display:flex; gap:8px; align-items:center; background:#F3F8F5; padding:8px 10px; border-radius:6px; border:1px solid #C6DDD0; font-size:13px;">
+            <span>🤖 Защита от ботов: <b>{{ cap_q }} =</b></span>
+            <input id="l-cap" name="cap_ans" required maxlength="3" placeholder="?" style="width:60px; padding:6px; border:1px solid #ccc; border-radius:4px; text-align:center;">
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+            <input id="l-otp" name="otp" maxlength="6" placeholder="Код 2FA (если включена)" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:6px;">
+            <button type="button" id="btn-send-otp" onclick="reqOtp()" style="padding:10px 12px; background:#2E7D32; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;">📩 Отправить код</button>
+        </div>
+        <div id="otp-status" style="font-size:12px; display:none; padding:6px 8px; border-radius:4px;"></div>
+        <button type="button" id="btn-fallback-email" onclick="reqOtp('email')" style="display:none; background:none; border:1px dashed #2E7D32; color:#133829; padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600;">📧 Не пришла SMS? Отправить код на Email</button>
+
+        <button type="submit" class="btn-cart" style="margin-top:4px;">Войти</button>
     </form>
-    <div style="margin-top:16px; padding-top:12px; border-top:1px solid #eee; text-align:center; font-size:13px;">
-        Нет аккаунта? <a href="/register" style="color:#2E7D32; font-weight:700;">Зарегистрироваться (-5%)</a>
+
+    <div style="margin-top:14px; font-size:13px; text-align:center;">
+        <a href="/forgot" style="color:#6B7280; display:block; margin-bottom:8px;">Забыли пароль? Восстановить по Email →</a>
+        Нет аккаунта? <a href="/register" style="color:#2E7D32; font-weight:700;">Зарегистрироваться (скидка 5%)</a>
     </div>
 </div>
+<script>
+let otpTimer = null;
+async function reqOtp(prefer = 'auto') {
+    let u = document.getElementById('l-user').value.trim();
+    let p = document.getElementById('l-pass').value.trim();
+    let c = document.getElementById('l-cap').value.trim();
+    let st = document.getElementById('otp-status');
+    let btn = document.getElementById('btn-send-otp');
+    if (!u || !p || !c) { st.style.display='block'; st.style.background='#FEE2E2'; st.style.color='#991B1B'; st.innerText='Заполните логин, пароль и пример защиты от ботов'; return; }
+    btn.disabled = true;
+    let fd = new FormData(document.getElementById('login-form'));
+    fd.append('prefer', prefer);
+    let res = await fetch('/api/send-login-2fa', {method: 'POST', body: fd});
+    let data = await res.json();
+    st.style.display = 'block';
+    st.style.background = data.ok ? '#D1FAE5' : '#FEE2E2';
+    st.style.color = data.ok ? '#065F46' : '#991B1B';
+    st.innerText = data.msg;
+    if (data.ok && !data.no_2fa) {
+        document.getElementById('l-otp').focus();
+        if (prefer === 'auto' && data.msg.includes('SMS')) document.getElementById('btn-fallback-email').style.display = 'block';
+        let sec = 60;
+        otpTimer = setInterval(() => {
+            sec--;
+            btn.innerText = `Повторно (${sec}с)`;
+            if (sec <= 0) { clearInterval(otpTimer); btn.disabled = false; btn.innerText = '📩 Отправить код'; }
+        }, 1000);
+    } else { btn.disabled = false; }
+}
+</script>
 {% endblock %}

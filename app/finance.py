@@ -27,7 +27,7 @@ def add_order(fio: str, phone: str, email: str, zip_code: str, address: str, tot
     if total <= 0 or any(r.get("phone")==phone and r.get("note")==summary and r.get("amount")==total and (now - r.get("ts",0)) < 60 for r in recs): return
     oid = int(now * 1000)
     is_live = bool(get_cfg().get("YOOKASSA_SHOP_ID", "").strip())
-    st = "Ожидает оплаты" if is_live else "Оплачен"
+    st = "Ожидает оплаты" if is_live else "Оплачен (Тест)"
     recs.insert(0, {"id": oid, "ts": now, "date": datetime.now().strftime("%Y-%m-%d %H:%M"), "type": "Приход", "status": st, "amount": total, "fio": fio, "phone": phone, "email": email, "zip": zip_code, "address": address, "track": "", "note": summary, "items_json": items_json, "restore_cart": False, "source": utm})
     save_records(recs)
     send_email(get_cfg().get("OWNER_EMAIL", ""), f"[MICOVALD: Новый заказ №{oid}] на {total} ₽ от {fio}", f"Поступил заказ №{oid} ({st})\nПокупатель: {fio}, тел. {phone}, Email: {email}\nДоставка: {zip_code}, {address}\nСостав: {summary}\nСумма: {total} ₽")
@@ -79,7 +79,7 @@ def export_kudir_csv() -> str:
     idx, s_in, s_out = 1, 0, 0
     for r in reversed(get_records()):
         st = r.get("status", "")
-        if st in ("Ожидает оплаты", "Тестовый заказ") or r.get("source") == "admin" or "тест" in r.get("fio", "").lower(): continue
+        if st in ("Ожидает оплаты", "Оплачен (Тест)", "Тестовый заказ") or r.get("source") == "admin" or "тест" in r.get("fio", "").lower(): continue
         if r["type"] == "Приход":
             if st == "Возврат (отменён)":
                 s_in -= r["amount"]; w.writerow([idx, f"От {r['date'][:10]} № {r['id']}-В", f"Возврат по заказу №{r['id']}", -r["amount"], 0]); idx += 1

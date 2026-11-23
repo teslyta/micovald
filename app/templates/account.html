@@ -56,7 +56,13 @@
     {% endif %}
 
     <div class="card">
-        <h3 style="color:#133829; margin-bottom:10px;">🔒 Безопасность (смена пароля)</h3>
+        <h3 style="color:#133829; margin-bottom:10px;">🔒 Безопасность и двухфакторная авторизация (2FA)</h3>
+        {% set u2fa = (prof or {}).get('2fa', False) %}
+        <form action="/account/2fa" method="post" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; padding-bottom:12px; border-bottom:1px dashed #ccc;">
+            <input type="hidden" name="enable" value="{{ '0' if u2fa else '1' }}">
+            <button type="submit" class="btn-cart" style="width:auto; margin:0; padding:6px 14px; background:{{ '#DC2626' if u2fa else '#2E7D32' }};">{{ 'Отключить 2FA' if u2fa else 'Включить 2FA (код на Email/SMS)' }}</button>
+            <span style="font-size:13px;">Статус 2FA: <b>{{ 'Активна (вход защищён одноразовым кодом)' if u2fa else 'Выключена' }}</b></span>
+        </form>
         {% if request.query_params.get('code_sent') %}<div style="background:#FEF3C7; color:#92400E; padding:8px; border-radius:6px; font-size:12px; margin-bottom:10px;">📩 6-значный код подтверждения отправлен на ваш Email / телефон.</div>{% endif %}
         {% if is_admin %}
         <p style="font-size:12px; color:#4B5563; margin-bottom:8px;">Для администратора требуется сложный пароль (от 10 символов, буквы + цифры) и подтверждение кодом 2FA.</p>

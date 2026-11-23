@@ -1,3 +1,5 @@
+from promos import get_promos, get_active_promo, save_promo, archive_promo
+import random
 import re
 import secrets
 from analytics import get_stats, track_visit, track_missed_search
@@ -49,7 +51,7 @@ def get_about() -> dict:
 
 def ctx(request: Request, **extra):
     u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
-    return {"request": request, "tax": get_tax(), "user": u, "is_admin": is_admin_user(u), "tax": get_tax(), "undo": get_undo() if u in [k for k, v in load_users().items() if k == "admin" or v.get("role") == "admin"] else None, **extra}
+    return {"request": request, "tax": get_tax(), "active_promo": get_active_promo(), "user": u, "is_admin": is_admin_user(u), "tax": get_tax(), "active_promo": get_active_promo(), "undo": get_undo() if u in [k for k, v in load_users().items() if k == "admin" or v.get("role") == "admin"] else None, **extra}
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/category/{slug}", response_class=HTMLResponse)
@@ -99,7 +101,34 @@ async def set_admin_role(request: Request, target_user: str = Form(...), make_ad
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_p(request: Request, err: str = ""):
-    return templates.TemplateResponse(request, "login.html", ctx(request, err=err))
+    a, b = random.randint(2, 9), random.randint(1, 8)
+    cap_sig = sign_session(f"cap:{a+b}:{int(time.time())}")
+    return templates.TemplateResponse(request, "login.html", ctx(request, err=err, cap_q=f"{a} + {b}", cap_sig=cap_sig))
+
+@app.post("/api/send-login-2fa")
+async def api_send_2fa(request: Request, login: str = Form(...), password: str = Form(...), cap_ans: str = Form(""), cap_sig: str = Form(""), website_url: str = Form(""), prefer: str = Form("auto")):
+    ip = request.client.host if request.client else "local"
+    if website_url or not check_rate_limit(ip): return {"ok": False, "msg": "Превышен лимит попыток или сработала защита от ботов"}
+    raw_cap = verify_session(cap_sig)
+    parts = raw_cap.split(":")
+    if len(parts) != 3 or parts[1] != cap_ans.strip() or (time.time() - int(parts[2])) < 1:
+        return {"ok": False, "msg": "Решите пример защиты от ботов правильно"}
+    raw_l = login.strip()
+    users_all = load_users()
+    l = raw_l if raw_l in users_all else next((k for k, v in users_all.items() if v.get("email", "").lower() == raw_l.lower()), raw_l)
+    u = users_all.get(l)
+    if not u or not verify_pw(password.strip(), u["pw"]):
+        record_fail(ip)
+        return {"ok": False, "msg": "Неверный логин или пароль"}
+    if not u.get("2fa"):
+        return {"ok": True, "no_2fa": True, "msg": "Для этого аккаунта 2FA отключена — нажмите Войти"}
+    em = u.get("email", "") or (get_cfg().get("OWNER_EMAIL", "") if l == "admin" else "")
+    ph = u.get("phone", "")
+    c2 = gen_email_otp(l)
+    ch = send_2fa_code(em, ph, c2, "вход в кабинет", prefer)
+    if not ch: return {"ok": False, "msg": "Укажите телефон или Email в Личном кабинете для 2FA"}
+    dest = f"по SMS на +{ph[:4]}***{ph[-2:]}" if ch == "phone" else f"на почту {em[:3]}***@{em.split('@')[-1]}"
+    return {"ok": True, "msg": f"Код 2FA отправлен {dest}"}
 
 @app.get("/register", response_class=HTMLResponse)
 async def reg_p(request: Request):
@@ -144,7 +173,7 @@ async def do_login(request: Request, login: str = Form(...), password: str = For
 async def do_reg(request: Request, login: str = Form(...), email: str = Form(...), password: str = Form(...)):
     users = load_users(); l = login.strip()
     if l in users or "@" not in email: return RedirectResponse("/register?err=1", 303)
-    users[l] = {"pw": hash_pw(password.strip()), "email": email.strip(), "2fa": False, "role": "user"}
+    users[l] = {"pw": hash_pw(password.strip()), "email": email.strip(), "2fa": True, "role": "user"}
     USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2))
     r = RedirectResponse("/account?welcome=1", 303)
     r.set_cookie("user", sign_session(l, request.headers.get("user-agent", "")), httponly=True, samesite="lax")
@@ -210,7 +239,7 @@ async def owner_p(request: Request, msg: str = ""):
     inc = sum(x["amount"] for x in recs if x["type"]=="Приход" and x.get("status") in ("Оплачен", "Отправлен", "Доставлен", "Проведено") and x.get("source") != "admin" and "тест" not in x.get("fio", "").lower())
     exp = sum(x["amount"] for x in recs if x["type"]=="Расход")
     adm = load_users().get("admin", {})
-    return templates.TemplateResponse(request, "owner.html", ctx(request, topics=get_topics(), farmers=get_farmers(), msg=msg, recs=recs, inc=inc, exp=exp, adm_2fa=adm.get("2fa", False), all_users=load_users(), stats=get_stats()))
+    return templates.TemplateResponse(request, "owner.html", ctx(request, topics=get_topics(), farmers=get_farmers(), msg=msg, recs=recs, inc=inc, exp=exp, adm_2fa=adm.get("2fa", False), all_users=load_users(), stats=get_stats(), promos=get_promos()))
 
 @app.post("/owner/lecture")
 async def save_lec(request: Request, topic: str = Form(...), new_cat: str = Form(""), new_desc: str = Form(""), lec_id: int = Form(0), title: str = Form(...), text: str = Form(""), photo: UploadFile = File(None)):
@@ -342,8 +371,9 @@ async def add_sw(request: Request, word: str = Form(...)):
 
 @app.post("/owner/clear-test")
 async def clear_test_data(request: Request):
+    # Удаляем тестовые заказы
     if not is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): return RedirectResponse("/login", 303)
-    save_records([r for r in get_records() if r.get("source") not in ("admin", "test") and "тест" not in r.get("fio", "").lower() and r.get("status") != "Тестовый заказ"])
+    save_records([r for r in get_records() if r.get("source") not in ("admin", "test") and "тест" not in r.get("fio", "").lower() and r.get("status") not in ("Тестовый заказ", "Оплачен (Тест)")])
     from analytics import STAT_FILE, atomic_save
     atomic_save(STAT_FILE, {"visits": {}, "missed": []})
     return RedirectResponse("/owner?msg=1", 303)
@@ -368,3 +398,27 @@ async def addr_suggest(q: str = ""):
         return out
     except Exception:
         return []
+
+@app.post("/account/2fa")
+async def user_toggle_2fa(request: Request, enable: str = Form("0")):
+    u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
+    if not u: return RedirectResponse("/login", 303)
+    users = load_users()
+    has_ph = len("".join(c for c in users[u].get("phone", "") if c.isdigit())) == 11
+    if enable == "1" and not users[u].get("email") and not has_ph and u != "admin":
+        return RedirectResponse("/account?err=" + urllib.parse.quote("Сначала укажите и сохраните Email в контактных данных выше"), 303)
+    users[u]["2fa"] = (enable == "1")
+    USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), encoding="utf-8")
+    return RedirectResponse("/account?msg=1", 303)
+
+@app.post("/owner/promo/save")
+async def owner_promo_save(request: Request, pid: int = Form(0), title: str = Form(...), desc: str = Form(...), discount: int = Form(10), start_date: str = Form(...), end_date: str = Form(...)):
+    if not is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): return RedirectResponse("/login", 303)
+    if check_stop_words(f"{title} {desc}"): return RedirectResponse("/owner?err=stop", 303)
+    save_promo(pid, title, desc, discount, start_date, end_date)
+    return RedirectResponse("/owner?msg=1", 303)
+
+@app.post("/owner/promo/archive/{pid}")
+async def owner_promo_arch(request: Request, pid: int):
+    if is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): archive_promo(pid)
+    return RedirectResponse("/owner?msg=1", 303)

@@ -27,16 +27,26 @@ def send_email(to_email: str, subject: str, body: str):
         except Exception as e:
             print("SMTP_ERR:", e, flush=True)
 
-def send_2fa_code(target_email: str, target_phone: str, code: str, action: str = "вход в панель управления"):
-    text = f"MICOVALD: Ваш код подтверждения ({action}): {code}. Никому не сообщайте этот код."
+def send_2fa_code(target_email: str, target_phone: str, code: str, action: str = "вход в кабинет", prefer: str = "auto") -> str:
+    text = f"MICOVALD: Код подтверждения ({action}): {code}. Никому не сообщайте этот код."
     cfg = get_cfg()
-    em = target_email or cfg.get("OWNER_EMAIL", "").strip()
-    if em: send_email(em, f"Код подтверждения MICOVALD: {code}", text)
-    sms_key = cfg.get("SMS_RU_API_ID", "").strip()
     ph = "".join(c for c in (target_phone or "") if c.isdigit())
-    if sms_key and len(ph) == 11:
-        try:
-            import urllib.request, urllib.parse
-            urllib.request.urlopen(f"https://sms.ru{sms_key}&to={ph}&msg={urllib.parse.quote(text)}&json=1", timeout=4)
-        except Exception as e:
-            print("SMS_ERR:", e, flush=True)
+    if len(ph) == 11 and ph.startswith("8"): ph = "7" + ph[1:]
+    em = (target_email or "").strip()
+
+    if prefer != "email" and len(ph) == 11:
+        with open(LOG_MAIL, "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] SMS TO: +{ph} | {text}\n{'-'*30}\n")
+        sms_key = cfg.get("SMS_RU_API_ID", "").strip()
+        if sms_key:
+            try:
+                import urllib.request, urllib.parse
+                urllib.request.urlopen(f"https://sms.ru{sms_key}&to={ph}&msg={urllib.parse.quote(text)}&json=1", timeout=4)
+            except Exception as e:
+                print("SMS_ERR:", e, flush=True)
+        return "phone"
+
+    if em and "@" in em:
+        send_email(em, f"[MICOVALD: Код безопасности] {code}", text)
+        return "email"
+    return ""

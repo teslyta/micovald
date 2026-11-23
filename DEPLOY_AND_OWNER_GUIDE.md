@@ -2,10 +2,10 @@
 
 ## 1. Перенос на боевой сервер (VPS на Ubuntu/Debian)
 1. На текущем компьютере перед упаковкой зайдите в Кабинет владельца (`/owner` -> вкладка «Заказы и КУДиР») и нажмите **«Очистить тестовые данные»**.
-2. В терминале в папке `~/mikivald` выполните: `./pack_for_prod.sh` — появится файл `~/micovald_prod.tar.gz`.
+2. В терминале в папке `~/mikovald` выполните: `./pack_for_prod.sh` — появится файл `~/micovald_prod.tar.gz`.
 3. Скопируйте `micovald_prod.tar.gz` на новый сервер в `/root/` (например: `scp ~/micovald_prod.tar.gz root@IP_СЕРВЕРА:/root/`).
 4. Подключитесь к серверу по SSH и запустите распаковку и установку одной командой:
-   `tar -xzf micovald_prod.tar.gz && cd mikivald && ./deploy_prod.sh micovald.ru`
+   `tar -xzf micovald_prod.tar.gz && cd mikovald && ./deploy_prod.sh micovald.ru`
    *(Скрипт сам установит Docker, настроит автозапуск при падении/перезагрузке сервера и выпустит бесплатный SSL-сертификат HTTPS).*
 
 ## 2. Настройка домена micovald.ru (у регистратора домена, например REG.RU)

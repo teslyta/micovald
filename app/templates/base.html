@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MICOVALD — Почвенные субстраты для активизации полезной микрофлоры</title>
+    <link rel="stylesheet" href="/media/style.css">
+</head>
+<body>
+<header>
+    <div class="header-top">
+        <a href="/" class="logo">🌿 MICOVALD</a>
+        <form class="search-bar" action="/" method="get">
+            <input type="text" name="q" value="{{ q or '' }}" placeholder="Поиск: Миковальд СП, НС, наборы...">
+            <button type="submit">🔍</button>
+        </form>
+        <div class="nav-links">
+            {% if user %}
+                <a href="/account" >👤 Личный кабинет ({{ user }})</a>
+                <a href="/logout" style="opacity:0.85; font-size:12px;">Выйти</a>
+            {% else %}
+                <a href="/login" >👤 Личный кабинет (Войти)</a>
+            {% endif %}
+            <a href="/cart" class="cart-btn">🛒 Корзина (<span id="cart-count">0</span>)</a>
+        </div>
+    </div>
+    <nav class="sub-nav">
+        <a href="/">Каталог</a>
+        <a href="/category/substrates">Субстраты почвенные</a>
+        <a href="/category/sets">Наборы и комплекты</a>
+        <a href="/encyclopedia">Энциклопедия и лекции</a>
+        <a href="/about">О производителе</a>
+        <a href="/farmers">Для фермеров</a>
+        <a href="/how-to-order">Как заказать</a>
+        {% if is_admin %}
+            <a href="/owner" style="color:#FCD34D;">★ Кабинет владельца</a>
+        {% endif %}
+    </nav>
+</header>
+{% if is_admin and stop_sug %}<div style="background:#FEF3C7; color:#92400E; padding:8px 20px; font-size:13px; border-bottom:1px solid #F59E0B; display:flex; align-items:center; gap:10px; flex-wrap:wrap;"><b>⚖ Обновление 109-ФЗ (стоп-лист):</b> найдены новые термины для запрета:{% for w in stop_sug %}<form action="/owner/stopword/add" method="post" style="display:inline;margin:0;"><input type="hidden" name="word" value="{{ w }}"><button style="background:#92400E;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:12px;">+ Добавить «{{ w }}»</button></form>{% endfor %}</div>{% endif %}
+<div class="container">{% block content %}{% endblock %}</div>
+<footer style="background:#133829; color:#D1DDD6; margin-top:40px; padding:28px 20px; font-size:13px;">
+    <div style="max-width:1280px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:20px;">
+        <div><b style="color:#fff; font-size:15px;">🌿 MICOVALD</b><p style="margin-top:6px; line-height:1.5;">Почвенные субстраты для активизации полезной микрофлоры. Российское производство (г. Санкт-Петербург).</p></div>
+        <div style="display:flex; flex-direction:column; gap:6px;"><b style="color:#fff;">Навигация</b><a href="/" style="color:#D1DDD6; text-decoration:none;">Каталог продукции</a><a href="/about" style="color:#D1DDD6; text-decoration:none;">О производителе</a><a href="/encyclopedia" style="color:#D1DDD6; text-decoration:none;">Энциклопедия и лекции</a><a href="/farmers" style="color:#D1DDD6; text-decoration:none;">Для фермеров и хозяйств</a></div>
+        <div style="display:flex; flex-direction:column; gap:6px;"><b style="color:#fff;">Покупателям и связь</b><a href="/how-to-order" style="color:#D1DDD6; text-decoration:none;">Как заказать и контакты</a><a href="/farmers" style="color:#FCD34D; text-decoration:none; font-weight:600;">✉ Форма обратной связи →</a><span>Доставка: Почта России • Оплата: ЮMoney</span></div>
+    </div>
+    <div style="max-width:1280px; margin:18px auto 0; padding-top:12px; border-top:1px solid #235742; font-size:12px; color:#9CA3AF;">© 2026 MICOVALD. Продукция не относится к пестицидам и агрохимикатам.</div>
+</footer>
+<script>
+let cart = JSON.parse(localStorage.getItem('mico_cart_final') || '[]').filter(x => x && x.name && x.price);
+function updCount() { document.getElementById('cart-count').innerText = cart.reduce((s, i) => s + (i.qty || 1), 0); }
+function addCart(name, price) {
+    let f = cart.find(x => x.name === name);
+    if (f) f.qty = (f.qty || 1) + 1; else cart.push({name, price, qty: 1, checked: true});
+    localStorage.setItem('mico_cart_final', JSON.stringify(cart));
+    updCount();
+}
+updCount();
+</script>
+</body>
+</html>

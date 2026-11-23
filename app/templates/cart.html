@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:740px; margin:20px auto;">
+    {% if ordered %}<div style="background:#D1FAE5; color:#065F46; padding:16px; border-radius:8px; margin-bottom:16px; border:1px solid #10B981;">
+        <b style="font-size:16px;">✓ Заказ №{{ request.query_params.get('oid', '') }} успешно оформлен и оплачен!</b>
+        <p style="margin-top:6px; font-size:13px;">Электронный чек и данные доставки отправлены на указанный вами Email. Когда посылка будет передана в Почту России, вы получите трек-номер на почту.</p>
+        {% if user %}<a href="/account" style="display:inline-block; margin-top:8px; color:#065F46; font-weight:700;">Перейти в Личный кабинет →</a>{% endif %}
+    </div>{% endif %}
+    {% if request.query_params.get('err') %}<div style="background:#FEE2E2; color:#991B1B; padding:12px; border-radius:8px; margin-bottom:16px; font-weight:600;">⚠ {{ request.query_params.get('err') }}</div>{% endif %}
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #eee;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; color:#133829;"><input type="checkbox" id="sel-all" checked onchange="toggleAll(this.checked)"> 🛒 Корзина (Выбрать все)</label>
+        <button type="button" onclick="delSelected()" title="Удалить выбранные" style="background:none; border:none; font-size:18px; cursor:pointer;">🗑️</button>
+    </div>
+    <div id="cart-list" style="font-size:14px; margin-bottom:14px;"></div>
+
+    <form action="/order/create" method="post" onsubmit="return prepOrder()" novalidate style="background:#F3F6F4; padding:14px; border-radius:8px; display:flex; flex-direction:column; gap:12px;">
+        <b style="color:#133829; font-size:15px;">📦 Доставка Почтой России</b>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:220px;"><input id="fio-in" name="fio" required oninput="checkAll()" placeholder="Фамилия Имя (только буквы)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;"><small id="fio-err" style="color:#DC2626; display:none;"></small></div>
+            <div style="width:190px;"><input id="phone-in" name="phone" required maxlength="18" oninput="maskPhone(this); checkAll()" placeholder="+7 (___) ___-__-__" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;"><small id="phone-err" style="color:#DC2626; display:none;"></small></div>
+            <div style="flex:1; min-width:200px;"><input id="email-in" name="email" type="email" value="{{ user_email or '' }}" required oninput="checkAll()" placeholder="Email (для чека и трек-номера)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;"><small id="email-err" style="color:#DC2626; display:none;"></small></div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="width:150px;"><input id="zip-in" name="zip_code" required maxlength="6" oninput="this.value=this.value.replace(/\D/g,''); checkAll()" placeholder="Индекс (6 цифр)" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;"><small id="zip-err" style="color:#DC2626; display:none;"></small></div>
+            <div style="flex:1; min-width:240px; position:relative;"><input id="addr-in" name="address" autocomplete="off" required oninput="fetchAddr(this.value); checkAll()" placeholder="Начните вводить город, улицу и дом..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;"><div id="addr-drop" style="display:none; position:absolute; left:0; right:0; top:38px; background:#fff; border:1px solid #133829; border-radius:6px; z-index:50; box-shadow:0 4px 12px rgba(0,0,0,0.12); max-height:180px; overflow-y:auto;"></div><small id="addr-err" style="color:#DC2626; display:none;"></small></div>
+        </div>
+        <input type="hidden" name="total" id="ord-total" value="0">
+        <input type="hidden" name="summary" id="ord-summary" value="">
+        <div style="border-top:1px solid #D1DDD6; padding-top:10px;">
+            <div style="font-size:14px;">Товары: <b id="cart-raw">0</b> ₽ + Доставка: <b>350 ₽</b></div>
+            <div id="disc-line" style="font-size:13px; color:#2E7D32; font-weight:600; margin:4px 0;"></div>
+            <div style="font-size:19px; font-weight:800; color:#133829; margin:6px 0 10px;">Итого: <span id="cart-sum">0</span> ₽</div>
+            <button type="submit" class="btn-cart" style="background:#7C3AED;">💳 Оплатить через ЮMoney / ЮKassa</button>
+        </div>
+    </form>
+</div>
+<script>
+const IS_AUTH = {{ 'true' if user else 'false' }};
+let items = JSON.parse(localStorage.getItem('mico_cart_final') || '[]').filter(x => x && x.name && x.price);
+items.forEach(x => { if (x.checked === undefined) x.checked = true; if (!x.qty) x.qty = 1; });
+
+
+let addrTimer = null;
+function fetchAddr(val) {
+    clearTimeout(addrTimer);
+    let drop = document.getElementById('addr-drop');
+    if (val.trim().length < 4) { drop.style.display = 'none'; return; }
+    addrTimer = setTimeout(async () => {
+        try {
+            let res = await fetch('/api/addr-suggest?q=' + encodeURIComponent(val));
+            let list = await res.json();
+            if (!list.length) { drop.style.display = 'none'; return; }
+            drop.innerHTML = list.map(x => `<div onclick="pickAddr('${x.label.replace(/"/g,'')}', '${x.zip}')" style="padding:8px 10px; font-size:13px; cursor:pointer; border-bottom:1px solid #eee;">📍 ${x.label} ${x.zip ? '<b>('+x.zip+')</b>' : ''}</div>`).join('');
+            drop.style.display = 'block';
+        } catch(e) {}
+    }, 350);
+}
+function pickAddr(lbl, zip) {
+    document.getElementById('addr-in').value = lbl;
+    if (zip && !document.getElementById('zip-in').value) document.getElementById('zip-in').value = zip;
+    document.getElementById('addr-drop').style.display = 'none';
+    checkAll();
+}
+function maskPhone(el) {
+    let d = el.value.replace(/\D/g, '');
+    if (d.startsWith('8')) d = '7' + d.slice(1);
+    if (d.length > 0 && !d.startsWith('7')) d = '7' + d;
+    let r = d.length > 0 ? '+7' : '';
+    if (d.length > 1) r += ' (' + d.slice(1, 4);
+    if (d.length >= 4) r += ') ' + d.slice(4, 7);
+    if (d.length >= 7) r += '-' + d.slice(7, 9);
+    if (d.length >= 9) r += '-' + d.slice(9, 11);
+    el.value = r;
+}
+function mark(id, erId, msg) {
+    let el = document.getElementById(id), er = document.getElementById(erId);
+    el.style.borderColor = msg ? '#DC2626' : '#ccc'; el.style.background = msg ? '#FEF2F2' : '#fff';
+    er.innerText = msg; er.style.display = msg ? 'block' : 'none';
+    return !msg;
+}
+function checkAll() {
+    let f = document.getElementById('fio-in').value.trim();
+    let junk = /(йцукен|фывапр|ячсмит|qwerty|asdf|zxcv|тест|test|1234|абвг)|(.)\2{3,}/i;
+    let okF = mark('fio-in', 'fio-err', !/^[А-Яа-яЁёA-Za-z\-]{2,30}(\s+[А-Яа-яЁёA-Za-z\-]{2,30}){1,3}$/.test(f) ? 'Введите Фамилию и Имя (только буквы, от 2 слов)' : (junk.test(f) ? 'В ФИО введена некорректная комбинация букв' : ''));
+    let okP = mark('phone-in', 'phone-err', document.getElementById('phone-in').value.replace(/\D/g,'').length === 11 ? '' : 'Введите 11 цифр телефона');
+    let em = document.getElementById('email-in').value.trim();
+    let okE = mark('email-in', 'email-err', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em) ? '' : 'Введите корректный Email для чека');
+    let z = document.getElementById('zip-in').value;
+    let okZ = mark('zip-in', 'zip-err', /^\d{6}$/.test(z) && z !== '000000' ? '' : 'Индекс — ровно 6 цифр');
+    let a = document.getElementById('addr-in').value.trim();
+    let okA = mark('addr-in', 'addr-err', (a.length >= 10 && /[А-Яа-яЁё]{3,}/.test(a) && /\d+/.test(a)) ? '' : 'Укажите город, улицу и номер дома');
+    return okF && okP && okE && okZ && okA;
+}
+function sync() {
+    localStorage.setItem('mico_cart_final', JSON.stringify(items));
+    document.getElementById('cart-count').innerText = items.reduce((s, i) => s + i.qty, 0);
+    document.getElementById('sel-all').checked = items.length > 0 && items.every(i => i.checked);
+    let sel = items.filter(i => i.checked);
+    let raw = sel.reduce((s, i) => s + i.price * i.qty, 0);
+    let disc = IS_AUTH ? Math.round(raw * 0.05) : 0;
+    let total = raw > 0 ? (raw - disc + 350) : 0;
+    document.getElementById('cart-raw').innerText = raw;
+    document.getElementById('disc-line').innerHTML = IS_AUTH ? `Скидка 5% (зарегистрированный пользователь): −${disc} ₽` : `<a href="/login" style="color:#2E7D32;">Войдите или зарегистрируйтесь</a> для скидки 5%`;
+    document.getElementById('cart-sum').innerText = total;
+    document.getElementById('ord-total').value = total;
+    document.getElementById('ord-summary').value = sel.map(i => `${i.name} (${i.qty} шт.)`).join(', ');
+    document.getElementById('cart-list').innerHTML = items.length ? items.map((i, idx) => `<div style="padding:10px 0; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between; gap:10px;"><label style="display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;"><input type="checkbox" ${i.checked?'checked':''} onchange="items[${idx}].checked=this.checked;sync()"><span>${i.name}</span></label><div style="display:flex; align-items:center; gap:6px;"><button type="button" onclick="chQty(${idx},-1)" style="padding:2px 8px;">-</button><b>${i.qty}</b><button type="button" onclick="chQty(${idx},1)" style="padding:2px 8px;">+</button></div><b>${i.price * i.qty} ₽</b><button type="button" onclick="items.splice(${idx},1);sync()" style="background:none;border:none;cursor:pointer;font-size:15px;">🗑️</button></div>`).join('') : 'Корзина пуста. <a href="/">В каталог</a>';
+}
+function toggleAll(st) { items.forEach(i => i.checked = st); sync(); }
+function delSelected() { items = items.filter(i => !i.checked); sync(); }
+function chQty(idx, d) { items[idx].qty += d; if (items[idx].qty <= 0) items.splice(idx, 1); sync(); }
+function prepOrder() {
+    if (!items.some(i => i.checked)) { alert('Выберите хотя бы один товар!'); return false; }
+    if (!checkAll()) return false;
+    items = items.filter(i => !i.checked);
+    localStorage.setItem('mico_cart_final', JSON.stringify(items));
+    return true;
+}
+sync();
+</script>
+{% endblock %}

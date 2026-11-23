@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MICOVALD — Субстраты почвенные для активизации полезной микрофлоры</title>
+    <link rel="stylesheet" href="/media/style.css">
+</head>
+<body><div id="auth-box" class="card" style="display:none;position:fixed;top:70px;right:140px;width:320px;z-index:250;box-shadow:0 10px 30px rgba(0,0,0,0.3)"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><b>Аккаунт (-5%)</b><button onclick="this.parentElement.parentElement.style.display='none'" style="border:none;background:none;cursor:pointer">✕</button></div><form action="/login" method="post" style="display:flex;flex-direction:column;gap:8px"><input name="email" required placeholder="Email или логин" style="padding:7px;border:1px solid #ccc;border-radius:4px"><input name="password" type="password" placeholder="Пароль" style="padding:7px;border:1px solid #ccc;border-radius:4px"><button class="btn-cart">Войти / Зарегистрироваться</button></form></div>
+<header>
+    <div class="nav-top">
+        <a href="/" class="logo">MICOVALD <span>Субстраты почвенные для активизации полезной микрофлоры</span></a>
+        <form action="/" class="search-box">
+            <input name="q" value="{{ q }}" placeholder="Поиск субстратов и наборов...">
+            <button>Найти</button>
+        </form>
+        <div style="display:flex; gap:12px; align-items:center; font-size:13px;">
+            {% if email %}
+                <span style="background:#1E4D3B; padding:6px 10px; border-radius:6px;">Скидка 5% ({{ email }})</span>
+                <a href="/logout" style="color:#A7F3D0;">Выйти</a>
+            {% else %}
+                <form action="/login" method="post" style="display:flex; gap:4px;">
+                    <input name="email" type="email" required placeholder="Логин / Email" style="width:110px;padding:6px;border-radius:4px;border:none;color:#111"/><input name="password" type="password" placeholder="Пароль" style="padding:6px 8px; border-radius:4px; border:none; color:#111;">
+                    <button style="background:#E67E22; color:#fff; border:none; padding:6px 10px; border-radius:4px; font-weight:700; cursor:pointer;">👤 Войти</button>
+                </form>
+            {% endif %}
+            <a href="javascript:void(0)" onclick="let c=document.getElementById('cart-box'); c.style.display=c.style.display==='none'?'block':'none'" style="background:#2E7D32; color:#fff; padding:7px 12px; border-radius:6px; text-decoration:none; font-weight:700;">🛒 Корзина (<span id="cart-count">0</span>)</a>
+        </div>
+    </div>
+</header>
+<div class="nav-sub">
+    <div class="nav-sub-inner">
+        <a href="#catalog">Каталог товаров</a>
+        <a href="#encyclopedia">Энциклопедия и лекции</a>
+        <a href="#vk">Лента ВКонтакте</a>
+        <a href="#owner" style="color:#FCD34D;">★ Кабинет владельца</a>
+    </div>
+</div>
+<div class="container">
+    <div class="filters">
+        <a href="/" class="filter-btn {{ 'active' if not cat else '' }}">Все товары</a>
+        <a href="/?cat=Субстраты почвенные" class="filter-btn {{ 'active' if cat=='Субстраты почвенные' else '' }}">Субстраты почвенные</a>
+        <a href="/?cat=Наборы" class="filter-btn {{ 'active' if cat=='Наборы' else '' }}">Наборы и комплекты</a>
+    </div>
+    <div class="grid" id="catalog">
+        {% for p in products %}
+        <div class="card">
+            <div>
+                <img src="{{ p.img }}" alt="{{ p.name }}">
+                <div class="badge">{{ p.cat }}</div>
+                <div class="title">{{ p.name }}</div>
+            </div>
+            <div>
+                {% if email %}<div style="font-size:12px; color:#9CA3AF; text-decoration:line-through;">{{ p.price }} ₽</div>{% endif %}
+                <div class="price">{{ p.final }} ₽</div>
+                <button class="btn-cart" onclick="addToCart('{{ p.name }}', {{ p.final }})">Добавить в корзину</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="cart-box" class="card" style="display:none; position:fixed; top:70px; right:20px; width:420px; max-width:92vw; z-index:200; box-shadow:0 10px 30px rgba(0,0,0,0.3);" style="margin-top:28px;">
+        <h2 style="color:#133829; margin-bottom:10px;">🛒 Корзина и оформление заказа</h2>
+        <div id="cart-items" style="font-size:14px; color:#4B5563;">Корзина пока пуста.</div>
+        <div style="margin-top:12px; font-weight:800; font-size:18px;">Итого: <span id="cart-total">0</span> ₽</div>
+        <div style="margin-top:12px; padding:12px; background:#F3F6F4; border-radius:6px; font-size:13px;">
+            <b>Доставка Почта России:</b> {{ 'Интерактивный виджет активен' if pr else 'Шаблон формы (Индекс, Город, Адрес — виджет подключится автоматически после заполнения POCHTA_WIDGET_ID в integrations.txt)' }}
+        </div>
+    </div>
+
+    <div {% if is_admin %}<div id="owner" class="card" style="display:{{ 'block' if is_admin else 'none' }};" style="margin-top:20px; border-color:#E67E22;">
+        <h2 style="color:#133829; margin-bottom:8px;">★ Кабинет владельца (Налоги, аналитика и модули)</h2>
+        <p style="font-size:13px; color:#374151; margin-bottom:10px;">Статус горячего подключения из файла <code>integrations.txt</code>:</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:13px;">
+            <span style="padding:6px 12px; border-radius:6px; background:{{ '#D1FAE5' if yk else '#FEF3C7' }};">ЮKassa (ЮMoney ИП): <b>{{ 'Подключена' if yk else 'Ожидает ключи в integrations.txt' }}</b></span>
+            <span style="padding:6px 12px; border-radius:6px; background:{{ '#D1FAE5' if pr else '#FEF3C7' }};">Почта России: <b>{{ 'Подключена' if pr else 'Ожидает ID в integrations.txt' }}</b></span>
+        </div>
+    </div>{% endif %}
+</div>
+<script>
+let cart = JSON.parse(localStorage.getItem('mico_clean_cart') || '[]');
+function renderCart() {
+    document.getElementById('cart-count').innerText = cart.length;
+    document.getElementById('cart-total').innerText = cart.reduce((s, i) => s + i.price, 0);
+    document.getElementById('cart-items').innerHTML = cart.length ? cart.map((i, idx) => `<div style="padding:4px 0; border-bottom:1px solid #eee;">${i.name} — <b>${i.price} ₽</b> <button onclick="cart.splice(${idx},1);saveCart()" style="color:red; border:none; background:none; cursor:pointer;">✕</button></div>`).join('') : 'Корзина пока пуста.';
+}
+function saveCart() { localStorage.setItem('mico_clean_cart', JSON.stringify(cart)); renderCart(); }
+function addToCart(name, price) { cart.push({name, price}); saveCart(); }
+renderCart();
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+{% if request.query_params.get('err') == 'stop' %}<div style="background:#FEE2E2; color:#991B1B; padding:10px 14px; border-radius:6px; margin-bottom:12px; font-weight:600;">⚠ Публикация заблокирована стоп-листом 109-ФЗ! Уберите запрещённые слова из названия, описания или категории.</div>{% endif %}
+
+<form action="/" method="get" style="background:#fff; padding:12px 16px; border-radius:10px; border:1px solid #DCE7E1; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <input name="q" value="{{ q or '' }}" placeholder="Поиск по названию..." style="flex:1; min-width:180px; padding:8px; border:1px solid #ccc; border-radius:6px;">
+    <select name="cat" style="padding:8px; border:1px solid #ccc; border-radius:6px;"><option value="">Все направления</option>{% for d in (tax or {}).get("directions", []) %}<option value="{{ d }}" {{ 'selected' if cat==d }}>{{ d }}</option>{% endfor %}</select>
+    <select name="purp" style="padding:8px; border:1px solid #ccc; border-radius:6px;"><option value="">Все назначения</option>{% for p in (tax or {}).get("purposes", []) %}<option value="{{ p }}" {{ 'selected' if purp==p }}>{{ p }}</option>{% endfor %}</select>
+    <button type="submit" class="filter-btn active" style="cursor:pointer; background:#133829;">Найти</button>
+    {% if cat or purp or q %}<a href="/" style="font-size:12px; color:#6B7280;">Сбросить</a>{% endif %}
+    {% if is_admin %}<button type="button" onclick="let f=document.getElementById('add-prod-form'); f.style.display=f.style.display==='none'?'block':'none'" class="filter-btn active" style="cursor:pointer; background:#2E7D32; margin-left:auto;">+ Добавить товар</button>{% endif %}
+</form>
+
+{% if is_admin %}
+<div id="add-prod-form" class="card" style="display:none; margin-top:14px; border:2px solid #2E7D32;">
+    <h3 style="color:#133829; margin-bottom:10px;">Новая карточка товара</h3>
+    <form action="/owner/product-save" method="post" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <select name="cat" style="padding:8px; border:1px solid #ccc; border-radius:6px; flex:1;">{% for d in (tax or {}).get("directions", []) %}<option value="{{ d }}">Направление: {{ d }}</option>{% endfor %}</select>
+            <input name="new_cat" placeholder="Или своё новое направление..." style="padding:8px; border:1px solid #ccc; border-radius:6px; flex:1;">
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <select name="purp" style="padding:8px; border:1px solid #ccc; border-radius:6px; flex:1;">{% for p in (tax or {}).get("purposes", []) %}<option value="{{ p }}">Назначение: {{ p }}</option>{% endfor %}</select>
+            <input name="new_purp" placeholder="Или своё новое назначение..." style="padding:8px; border:1px solid #ccc; border-radius:6px; flex:1;">
+            <input name="price" type="number" required min="1" placeholder="Цена (₽)" style="padding:8px; border:1px solid #ccc; border-radius:6px; width:130px;">
+        </div>
+        <input name="name" required placeholder="Название товара" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+        <textarea name="desc" rows="2" placeholder="Краткое описание (без стоп-слов)..." style="padding:8px; border:1px solid #ccc; border-radius:6px;"></textarea>
+        <label style="font-size:13px;">Фото упаковки: <input type="file" name="photo" accept="image/*" required></label>
+        <button class="btn-cart" style="background:#133829;">Опубликовать в каталоге</button>
+    </form>
+</div>
+{% endif %}
+<div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap; margin-top:16px;">
+    <aside class="card" style="width:240px; flex-shrink:0; background:#F3F8F5; border-color:#C6DDD0; font-size:13px; line-height:1.5;">
+        <b style="color:#133829; font-size:15px; display:block; margin-bottom:8px;">🌿 О продукции MICOVALD</b>
+        <p style="margin-bottom:8px;"><b>Природный состав:</b> почвенные субстраты для активизации полезной микрофлоры. Не относятся к пестицидам и агрохимикатам.</p>
+        <p style="margin-bottom:8px;"><b>Производство в РФ:</b> выпуск в Санкт-Петербурге с лабораторным контролем качества.</p>
+        <p style="margin-bottom:10px;"><b>Выгода:</b> скидка 5% после регистрации, доставка Почтой России и оплата ЮMoney.</p>
+        <a href="/about" style="color:#2E7D32; font-weight:700; text-decoration:none; display:block; margin-bottom:4px;">→ О производителе</a>
+        <a href="/encyclopedia" style="color:#2E7D32; font-weight:700; text-decoration:none; display:block;">→ Энциклопедия и лекции</a>
+    </aside>
+    <div class="grid" style="flex:1; min-width:280px; margin-top:0;">
+        {% for p in products %}
+        <div class="card">
+            <div>
+                <img src="{{ p.img }}" alt="{{ p.name }}">
+                <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px;"><span class="badge">{{ p.cat }}</span>{% if p.purp %}<span class="badge" style="background:#EFF6FF; color:#1D4ED8;">{{ p.purp }}</span>{% endif %}</div>
+                <div class="title">{{ p.name }}</div>
+                {% if p.desc %}<p style="font-size:12px; color:#4B5563; margin-bottom:10px; line-height:1.4;">{{ p.desc }}</p>{% endif %}
+            </div>
+            <div>
+                <div class="price">{{ p.price }} ₽</div>
+                <button class="btn-cart" onclick="addCart('{{ p.name }}', {{ p.price }}); this.innerText='✓ В корзине';">Добавить в корзину</button>
+                {% if is_admin %}
+                <div style="display:flex; gap:6px; margin-top:6px;">
+                    <button type="button" onclick="let e=document.getElementById('ep-{{ p.id }}'); e.style.display=e.style.display==='none'?'flex':'none'" style="flex:1; background:#fff; border:1px solid #ccc; padding:4px; border-radius:4px; font-size:11px; cursor:pointer;">✎ Изменить</button>
+                    <form action="/owner/delete-product/{{ p.id }}" method="post" style="flex:1; margin:0;"><button style="width:100%; background:none; border:1px solid #FCA5A5; color:#DC2626; padding:4px; border-radius:4px; font-size:11px; cursor:pointer;">Удалить</button></form>
+                </div>
+                <form id="ep-{{ p.id }}" action="/owner/product-save" method="post" enctype="multipart/form-data" style="display:none; flex-direction:column; gap:6px; margin-top:8px; padding-top:8px; border-top:1px dashed #ccc;">
+                    <input type="hidden" name="pid" value="{{ p.id }}">
+                    <input name="name" value="{{ p.name }}" required style="padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                    <input name="price" type="number" value="{{ p.price }}" required style="padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                    <select name="cat" style="padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px;">{% for d in (tax or {}).get("directions", []) %}<option value="{{ d }}" {{ 'selected' if p.cat==d }}>{{ d }}</option>{% endfor %}</select>
+                    <input name="new_cat" placeholder="Новое направление..." style="padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                    <select name="purp" style="padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px;">{% for pr in (tax or {}).get("purposes", []) %}<option value="{{ pr }}" {{ 'selected' if p.purp==pr }}>{{ pr }}</option>{% endfor %}</select>
+                    <input name="new_purp" placeholder="Новое назначение..." style="padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                    <textarea name="desc" rows="2" style="padding:5px; font-size:12px; border:1px solid #ccc; border-radius:4px;">{{ p.desc }}</textarea>
+                    <button type="submit" class="btn-cart" style="padding:5px; font-size:12px;">Сохранить</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

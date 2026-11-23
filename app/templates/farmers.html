@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:740px; margin:20px auto; padding:24px;">
+    {% if request.query_params.get('err') %}<div style="background:#FEE2E2; color:#991B1B; padding:12px; border-radius:6px; margin-bottom:16px; font-weight:600;">⚠ {{ request.query_params.get('err') }}</div>{% endif %}
+    {% if sent %}<div style="background:#D1FAE5; color:#065F46; padding:12px; border-radius:6px; margin-bottom:16px;"><b>✓ Ваша заявка отправлена!</b> Мы ответим в течение рабочего дня.</div>{% endif %}
+
+    <h1 style="color:#133829; margin-bottom:10px;">Решения для фермеров и сельхозпредприятий</h1>
+    <p style="font-size:14px; color:#374151; line-height:1.6; margin-bottom:16px;">Индивидуальный подбор почвенных субстратов MICOVALD под ваши культуры, оптовые партии, консультации микробиолога и сопроводительная документация.</p>
+
+    <form action="/farmers/send" method="post" onsubmit="return checkFarm()" style="display:flex; flex-direction:column; gap:10px; background:#F3F8F5; padding:16px; border-radius:8px;">
+        <b style="color:#133829;">Оставить заявку на сотрудничество или задать вопрос</b>
+        <input id="f-name" name="name" required oninput="this.value=this.value.replace(/[^А-Яа-яЁёA-Za-z\s\-]/g,'')" placeholder="Ваше имя и фамилия (только буквы)" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input id="f-phone" name="phone" required maxlength="18" oninput="maskFPhone(this)" placeholder="+7 (___) ___-__-__" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input name="farm" placeholder="Название хозяйства / регион (необязательно)" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <textarea id="f-msg" name="msg" rows="3" required minlength="10" placeholder="Опишите ваши культуры, площадь или вопрос (минимум 10 символов)..." style="padding:10px; border:1px solid #ccc; border-radius:6px;"></textarea>
+        <small id="f-err" style="color:#DC2626; display:none; font-weight:600;"></small>
+        <button type="submit" class="btn-cart" style="background:#133829;">Отправить запрос</button>
+    </form>
+</div>
+<script>
+function maskFPhone(el) {
+    let d = el.value.replace(/\D/g, '');
+    if (d.startsWith('8')) d = '7' + d.slice(1);
+    if (d.length > 0 && !d.startsWith('7')) d = '7' + d;
+    let r = d.length > 0 ? '+7' : '';
+    if (d.length > 1) r += ' (' + d.slice(1, 4);
+    if (d.length >= 4) r += ') ' + d.slice(4, 7);
+    if (d.length >= 7) r += '-' + d.slice(7, 9);
+    if (d.length >= 9) r += '-' + d.slice(9, 11);
+    el.value = r;
+}
+function checkFarm() {
+    let er = document.getElementById('f-err');
+    let n = document.getElementById('f-name').value.trim();
+    let p = document.getElementById('f-phone').value.replace(/\D/g,'');
+    let m = document.getElementById('f-msg').value.trim();
+    let junk = /(йцукен|фывапр|ячсмит|qwerty|asdf|zxcv|абвг)|(.)\2{3,}/i;
+    if (n.length < 2 || junk.test(n)) { er.innerText = 'Укажите корректное имя (только буквы)'; er.style.display='block'; return false; }
+    if (p.length !== 11) { er.innerText = 'Введите 11 цифр номера телефона'; er.style.display='block'; return false; }
+    if (m.length < 10 || !/[аеёиоуыэюяaeiouy]/i.test(m) || junk.test(m)) { er.innerText = 'Опишите ваш вопрос осмысленным текстом (от 10 символов)'; er.style.display='block'; return false; }
+    er.style.display='none'; return true;
+}
+</script>
+{% endblock %}

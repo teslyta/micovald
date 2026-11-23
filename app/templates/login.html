@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:400px; margin:30px auto;">
+    <h2 style="color:#133829; margin-bottom:14px;">Вход в аккаунт</h2>
+    {% if request.query_params.get("need2fa") %}<div style="background:#FEF3C7;color:#92400E;padding:8px;border-radius:6px;font-size:13px;margin-bottom:10px;">Код 2FA отправлен на почту владельца</div>{% endif %}
+    {% if err %}<div style="background:#FEE2E2; color:#B91C1C; padding:8px; border-radius:6px; font-size:13px; margin-bottom:10px;">Неверный логин или пароль</div>{% endif %}
+    <form action="/login" method="post" style="display:flex; flex-direction:column; gap:12px;">
+        <input name="login" required placeholder="Ваш Email или логин" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input name="password" type="password" required placeholder="Пароль" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input name="otp" maxlength="6" placeholder="Код 2FA (если включена)" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <button class="btn-cart">Войти</button>
+    </form>
+    <div style="margin-top:16px; padding-top:12px; border-top:1px solid #eee; text-align:center; font-size:13px;">
+        Нет аккаунта? <a href="/register" style="color:#2E7D32; font-weight:700;">Зарегистрироваться (-5%)</a>
+    </div>
+</div>
+{% endblock %}

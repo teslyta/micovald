@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:900px; margin:20px auto; padding:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h1 style="color:#133829; font-size:22px;">{{ about.title }}</h1>
+        {% if is_admin %}<button type="button" onclick="let f=document.getElementById('ed-ab'); f.style.display=f.style.display==='none'?'flex':'none'" class="filter-btn active" style="cursor:pointer; background:#2E7D32;">✎ Редактировать страницу</button>{% endif %}
+    </div>
+
+    {% if is_admin %}
+    <form id="ed-ab" action="/owner/about" method="post" enctype="multipart/form-data" style="display:none; background:#F3F6F4; padding:16px; border:2px solid #2E7D32; border-radius:8px; margin-bottom:18px; flex-direction:column; gap:10px;">
+        <input name="title" value="{{ about.title }}" required style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+        <textarea name="text" rows="5" required style="padding:8px; border:1px solid #ccc; border-radius:6px;">{{ about.text }}</textarea>
+        <label style="font-size:13px;">Заменить портрет: <input type="file" name="photo" accept="image/*"></label>
+        <button type="submit" class="btn-cart" style="background:#133829;">Сохранить изменения</button>
+    </form>
+    {% endif %}
+
+    <div style="display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap; margin-bottom:24px;">
+        {% if about.img %}<img src="{{ about.img }}" style="width:200px; height:200px; border-radius:50%; object-fit:cover; border:1px solid #D1DDD6; flex-shrink:0;">{% endif %}
+        <div style="flex:1; min-width:260px;">
+            <div style="font-size:15px; line-height:1.65; white-space:pre-line; color:#1F2937; margin-bottom:16px;">{{ about.text }}</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="/" class="filter-btn active" style="text-decoration:none; background:#2E7D32;">Перейти в каталог</a>
+                <a href="/encyclopedia" class="filter-btn" style="text-decoration:none;">Полезные материалы</a>
+            </div>
+        </div>
+    </div>
+
+    <div style="border-top:1px solid #eee; padding-top:18px;">
+        <h3 style="color:#133829; margin-bottom:10px;">Новости сообщества ВКонтакте</h3>
+        {% if vk_posts %}
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                {% for post in vk_posts %}<div style="background:#F9FBFA; padding:12px; border-radius:6px; border:1px solid #D1DDD6; font-size:13px; white-space:pre-line;">{{ post[:350] }}</div>{% endfor %}
+            </div>
+        {% else %}
+            <p style="font-size:13px; color:#6B7280;">{{ 'Постов пока нет.' if vk_ok else 'Лента новостей ВКонтакте подключится автоматически после заполнения VK_SERVICE_TOKEN и VK_GROUP_DOMAIN в файле integrations.txt.' }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

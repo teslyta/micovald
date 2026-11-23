@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:960px; margin:20px auto;">
+    {% if msg %}<div style="background:#D1FAE5; color:#065F46; padding:10px 14px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:14px;">✓ Изменения успешно сохранены!</div>{% endif %}
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; border-bottom:2px solid #D1DDD6; padding-bottom:10px;">
+        <button type="button" class="tab-btn filter-btn active" onclick="openTab('t-orders', this)">📦 Заказы и КУДиР ({{ recs|length }})</button>
+        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-stats', this)">📊 Статистика и диаграммы</button>
+        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-enc', this)">📚 Энциклопедия</button>
+        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-farm', this)">🌾 Обращения ({{ farmers|length }})</button>
+        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-sec', this)">🛡️ Безопасность и 2FA</button>
+    </div>
+
+    <div id="t-orders" class="tab-pane card" style="border-top:4px solid #E67E22;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+            <h2 style="color:#133829;">Заказы, трек-номера и КУДиР ФНС</h2>
+            <form action="/owner/clear-test" method="post" onsubmit="return confirm('Удалить все тестовые заказы и обнулить статистику визитов?')" style="display:inline;margin:0;"><button style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">🧹 Очистить тестовые данные</button></form>
+            <a href="/owner/export.csv" style="background:#133829; color:#fff; padding:8px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:700;">📥 Скачать отчёт КУДиР ФНС</a>
+        </div>
+        <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:14px; font-size:15px; background:#F9FBFA; padding:12px; border-radius:6px;">
+            <span>Приход: <b style="color:#059669;">{{ inc }} ₽</b></span>
+            <span>Расход: <b style="color:#DC2626;">{{ exp }} ₽</b></span>
+            <span>Налоговая база: <b>{{ inc - exp }} ₽</b></span>
+        </div>
+        <form action="/owner/finance" method="post" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+            <select name="ftype" style="padding:8px; border:1px solid #ccc; border-radius:6px;"><option value="Расход">Расход (сырьё, упаковка)</option><option value="Приход">Приход (ручной)</option></select>
+            <input name="amount" type="number" required min="1" placeholder="Сумма (₽)" style="width:130px; padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <input name="note" required placeholder="Назначение платежа" style="flex:1; min-width:200px; padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <button type="submit" class="btn-cart" style="width:auto; margin:0; padding:8px 16px;">Записать</button>
+        </form>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            {% for r in recs %}
+            <div style="padding:12px; border:1px solid #E5E7EB; border-radius:8px; background:{{ '#FEF2F2' if r.status=='Возврат (отменён)' else '#FFFFFF' }}; font-size:13px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div><small style="color:#6B7280;">{{ r.date }}</small> • <span class="badge">{{ r.status or r.type }}</span> <b style="margin-left:6px; color:{{ '#059669' if r.type=='Приход' else '#DC2626' }};">{{ '+' if r.type=='Приход' else '−' }}{{ r.amount }} ₽</b></div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        {% if r.status=='Ожидает оплаты' %}<form action="/owner/order/paid/{{ r.id }}" method="post" style="margin:0;"><button style="padding:4px 8px;border:1px solid #10B981;background:#D1FAE5;color:#065F46;border-radius:4px;cursor:pointer;font-size:12px;">✓ Подтвердить оплату</button></form>{% endif %}
+                        <button type="button" onclick="let f=document.getElementById('ed-{{ r.id }}'); f.style.display=f.style.display==='none'?'flex':'none'" style="padding:4px 8px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer; font-size:12px;">✎ Изменить</button>
+                        {% if r.status != 'Возврат (отменён)' %}<form action="/owner/order/refund/{{ r.id }}" method="post" onsubmit="return confirm('Отменить и вернуть средства?')" style="margin:0;"><button style="padding:4px 8px; border:1px solid #F59E0B; background:#FEF3C7; color:#92400E; border-radius:4px; cursor:pointer; font-size:12px;">↩ Возврат</button></form>{% endif %}
+                        <form action="/owner/order/delete/{{ r.id }}" method="post" onsubmit="return confirm('Удалить запись?')" style="margin:0;"><button title="Удалить" style="background:none; border:none; cursor:pointer; font-size:15px;">🗑️</button></form>
+                    </div>
+                </div>
+                <div style="margin-top:6px;"><b>Состав/назначение:</b> {{ r.note }}</div>
+                {% if r.fio %}<div style="margin-top:4px; color:#4B5563;"><b>Получатель:</b> {{ r.fio }}, {{ r.phone }} {% if r.email %}({{ r.email }}){% endif %} | <b>Почта РФ:</b> {{ r.zip }}, {{ r.address }} {% if r.track %}| <b>Трек:</b> {{ r.track }}{% endif %}</div>{% endif %}
+                <form id="ed-{{ r.id }}" action="/owner/order/edit/{{ r.id }}" method="post" style="display:none; flex-direction:column; gap:8px; margin-top:10px; padding-top:10px; border-top:1px dashed #ccc;">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input name="fio" value="{{ r.fio }}" placeholder="ФИО" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                        <input name="phone" value="{{ r.phone }}" placeholder="Телефон" style="width:160px; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                        <select name="status" style="padding:6px; border:1px solid #ccc; border-radius:4px;"><option {{ 'selected' if r.status=='Ожидает оплаты' }}>Ожидает оплаты</option><option {{ 'selected' if r.status=='Оплачен' }}>Оплачен</option><option {{ 'selected' if r.status=='Отправлен' }}>Отправлен</option><option {{ 'selected' if r.status=='Доставлен' }}>Доставлен</option></select>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input name="zip_code" value="{{ r.zip }}" placeholder="Индекс" style="width:90px; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                        <input name="address" value="{{ r.address }}" placeholder="Адрес доставки" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                        <input name="track" value="{{ r.track or '' }}" placeholder="Трек-номер Почты РФ" style="width:160px; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                        <button type="submit" class="btn-cart" style="width:auto; margin:0; padding:6px 14px;">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+            {% else %}<div style="color:#6B7280; font-size:13px;">Заказов и записей пока нет.</div>{% endfor %}
+        </div>
+    </div>
+    <div id="t-stats" class="tab-pane card" style="display:none; border-top:4px solid #059669;">
+        <h2 style="color:#133829; margin-bottom:12px;">📊 Аналитика посетителей и воронка конверсии</h2>
+        {% set v_list = (stats.visits.values()|list) if stats and stats.visits else [] %}
+        {% set total_v = v_list|length %}
+        {% set auth_v = v_list|selectattr('user', 'ne', 'Гость')|list|length %}
+        {% set ord_v = v_list|selectattr('ordered')|list|length %}
+        <div style="background:#F3F8F5; padding:14px; border-radius:8px; margin-bottom:14px;">
+            <b style="font-size:13px; color:#133829; display:block; margin-bottom:10px;">Диаграмма воронки посетителей (Всего визитов: {{ total_v }})</b>
+            <svg width="100%" height="96" style="font-family:sans-serif; font-size:12px;">
+                <text x="0" y="18" fill="#1F2937">Всего визитов ({{ total_v }})</text>
+                <rect x="170" y="5" width="{{ [total_v * 18, 360]|min if total_v else 4 }}" height="18" rx="4" fill="#133829"/>
+                <text x="0" y="50" fill="#1F2937">Авторизовались ({{ auth_v }})</text>
+                <rect x="170" y="37" width="{{ [auth_v * 18, 360]|min if auth_v else 4 }}" height="18" rx="4" fill="#2E7D32"/>
+                <text x="0" y="82" fill="#1F2937">Оформили заказ ({{ ord_v }})</text>
+                <rect x="170" y="69" width="{{ [ord_v * 18, 360]|min if ord_v else 4 }}" height="18" rx="4" fill="#D97706"/>
+            </svg>
+        </div>
+        {% if stats and stats.missed %}
+        <div style="background:#FEF3C7; padding:10px 12px; border-radius:6px; margin-bottom:12px; font-size:13px;">
+            <b>🔍 Что искали в поиске и не нашли (упущенный спрос):</b>
+            <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">{% for m in stats.missed[:15] %}<span class="badge" style="background:#fff; color:#92400E; border:1px solid #F59E0B;">«{{ m.q }}» ({{ m.user }}, {{ m.date }})</span>{% endfor %}</div>
+        </div>
+        {% endif %}
+        <div style="display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto;">
+            {% for v in v_list|reverse %}
+            {% set dur = (v.last - v.start)|int %}
+            <div style="padding:8px 10px; border:1px solid #E5E7EB; border-radius:6px; background:#F9FBFA; font-size:12px;">
+                <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+                    <span><b>{{ v.date }}</b> • <b>{{ v.user }}</b> (#{{ v.vid }}) • На сайте: <b>{{ dur // 60 }} мин {{ dur % 60 }} сек</b></span>
+                    <span class="badge" style="background:{{ '#D1FAE5' if v.ordered else '#F3F4F6' }}; color:{{ '#065F46' if v.ordered else '#4B5563' }};">{{ '✓ Оформил заказ' if v.ordered else 'Без заказа' }}</span>
+                </div>
+                <div style="margin-top:4px; color:#374151;"><b>Смотрел:</b> {{ v.pages|join(" → ") }}</div>
+            </div>
+            {% else %}<div style="color:#6B7280; font-size:13px;">Визитов пока не зафиксировано.</div>{% endfor %}
+        </div>
+    </div>
+
+    <div id="t-enc" class="tab-pane card" style="display:none; border-top:4px solid #2E7D32;">
+        <h2 style="color:#133829; margin-bottom:10px;">📚 Добавить лекцию или раздел в Энциклопедию</h2>
+        <form action="/owner/lecture" method="post" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:10px;">
+            <input type="hidden" name="lec_id" value="0">
+            <select name="topic" onchange="document.getElementById('own-new-sec').style.display=this.value==='__new__'?'flex':'none'" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+                {% for s, a in topics.items() %}<option value="{{ s }}">Раздел: {{ a.cat }} ({{ a.lectures|length }} лекц.)</option>{% endfor %}
+                <option value="__new__">+ Создать новый раздел...</option>
+            </select>
+            <div id="own-new-sec" style="display:none; flex-direction:column; gap:8px; background:#F3F6F4; padding:10px; border-radius:6px;">
+                <input name="new_cat" placeholder="Название нового раздела" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+                <input name="new_desc" placeholder="Описание раздела" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            </div>
+            <input name="title" required placeholder="Название новой лекции" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <textarea name="text" rows="4" placeholder="Текст лекции..." style="padding:8px; border:1px solid #ccc; border-radius:6px;"></textarea>
+            <label style="font-size:13px;">Картинка к лекции: <input type="file" name="photo" accept="image/*"></label>
+            <button type="submit" class="btn-cart" style="background:#133829; cursor:pointer;">Опубликовать лекцию</button>
+        </form>
+    </div>
+
+    <div id="t-farm" class="tab-pane card" style="display:none; border-top:4px solid #2563EB;">
+        <h2 style="color:#133829; margin-bottom:10px;">🌾 Обращения фермеров и покупателей ({{ farmers|length }})</h2>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            {% for f in farmers %}
+            <div style="padding:10px; border:1px solid #E5E7EB; border-radius:6px; background:#F9FBFA; font-size:13px; display:flex; justify-content:space-between; gap:10px;">
+                <div><small style="color:#6B7280;">{{ f.date }}</small> • <b>{{ f.name }}</b> ({{ f.phone }}) {% if f.farm %}| <i>{{ f.farm }}</i>{% endif %}<div style="margin-top:4px;">{{ f.msg }}</div></div>
+                <form action="/owner/farmers/delete/{{ f.id }}" method="post" style="margin:0;"><button title="Удалить обращение" style="background:none; border:none; cursor:pointer; font-size:15px;">🗑️</button></form>
+            </div>
+            {% else %}<div style="color:#6B7280; font-size:13px;">Новых обращений пока нет.</div>{% endfor %}
+        </div>
+    </div>
+
+    <div id="t-sec" class="tab-pane card" style="display:none; border-top:4px solid #133829; font-size:13px;">
+        <h2 style="color:#133829; margin-bottom:10px;">🛡️ Безопасность, 2FA по Email и права доступа</h2>
+        <p style="margin-bottom:12px; color:#374151;">Активна защита: <b>PBKDF2-SHA256</b>, тайм-аут сессии 30 мин, защита от перебора паролей, <b>CSRF-фильтр</b>, автобэкап базы и стоп-фильтр <b>109-ФЗ</b>.</p>
+        <form action="/owner/2fa" method="post" style="display:flex; gap:10px; align-items:center; margin-bottom:14px;">
+            <input type="hidden" name="enable" value="{{ '0' if adm_2fa else '1' }}">
+            <button type="submit" class="btn-cart" style="width:auto; margin:0; padding:6px 14px; background:{{ '#DC2626' if adm_2fa else '#2E7D32' }};">{{ 'Отключить 2FA по Email' if adm_2fa else 'Включить 2FA по Email' }}</button>
+            <span>Статус 2FA: <b>{{ 'Активна (код отправляется на OWNER_EMAIL)' if adm_2fa else 'Выключена' }}</b></span>
+        </form>
+        <form action="/owner/set-admin" method="post" style="display:flex; gap:8px; flex-wrap:wrap; padding-top:12px; border-top:1px dashed #ccc; align-items:center;">
+            <b>👑 Назначить второго администратора:</b>
+            <select name="target_user" style="padding:6px; border:1px solid #ccc; border-radius:4px;">{% for k, v in (all_users or {}).items() if k != "admin" %}<option value="{{ k }}">{{ k }} ({{ "Админ" if v.get("role")=="admin" else "Покупатель" }})</option>{% endfor %}</select>
+            <select name="make_admin" style="padding:6px; border:1px solid #ccc; border-radius:4px;"><option value="1">Выдать права админа</option><option value="0">Снять права админа</option></select>
+            <button type="submit" class="btn-cart" style="width:auto; margin:0; padding:6px 12px;">Применить</button>
+        </form>
+    </div>
+</div>
+<script>
+function openTab(id, btn) {
+    document.querySelectorAll('.tab-pane').forEach(e => e.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).style.display = 'block';
+    btn.classList.add('active');
+}
+</script>
+{% endblock %}

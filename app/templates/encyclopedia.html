@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+    <h2 style="color:#133829;">Энциклопедия и лекции</h2>
+    {% if is_admin and undo %}<form action="/owner/undo" method="post" style="display:inline;"><button style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;padding:6px 12px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">↩ Отменить: {{ undo.label }}</button></form>{% endif %}
+    {% if is_admin %}<button type="button" onclick="let f=document.getElementById('enc-add'); f.style.display=f.style.display==='none'?'block':'none'" class="filter-btn active" style="cursor:pointer; background:#2E7D32;">+ Добавить лекцию или раздел</button>{% endif %}
+</div>
+
+{% if is_admin %}
+<div id="enc-add" class="card" style="display:none; margin-bottom:18px; border:2px solid #2E7D32;">
+    <h3 style="color:#133829; margin-bottom:10px;">Новая лекция (номер присвоится автоматически)</h3>
+    <form action="/owner/lecture" method="post" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:10px;">
+        <select name="topic" onchange="document.getElementById('new-sec-box').style.display=this.value==='__new__'?'flex':'none'" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            {% for s, a in articles.items() %}<option value="{{ s }}">Раздел: {{ a.cat }} ({{ a.lectures|length }} лекц.)</option>{% endfor %}
+            <option value="__new__">+ Создать новый раздел...</option>
+        </select>
+        <div id="new-sec-box" style="display:none; flex-direction:column; gap:8px; background:#F3F6F4; padding:10px; border-radius:6px;">
+            <input name="new_cat" placeholder="Название нового раздела (например: Садоводство)" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <input name="new_desc" placeholder="Краткое описание нового раздела" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+        </div>
+        <input type="hidden" name="lec_id" value="0">
+        <input name="title" required placeholder="Название новой лекции" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+        <textarea name="text" rows="4" placeholder="Текст лекции..." style="padding:8px; border:1px solid #ccc; border-radius:6px;"></textarea>
+        <label style="font-size:13px;">Картинка к лекции: <input type="file" name="photo" accept="image/*"></label>
+        <button type="submit" class="btn-cart" style="background:#133829; cursor:pointer;">Добавить лекцию</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="grid">
+    {% for slug, a in articles.items() %}
+    <a href="/encyclopedia/{{ slug }}" class="card" style="text-decoration:none; color:inherit;">
+        <div class="badge">{{ a.cat }}</div>
+        <div class="title">{{ a.title }}</div>
+        <p style="font-size:13px; color:#4B5563;">{{ a.desc[:90] }}...</p>
+        <span style="margin-top:12px; font-size:12px; color:#2E7D32; font-weight:700;">Читать лекции ({{ a.lectures|length }}) →</span>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

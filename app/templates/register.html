@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:420px; margin:30px auto; padding:24px;">
+    <h2 style="color:#133829; margin-bottom:10px;">Регистрация покупателя</h2>
+    <p style="font-size:13px; color:#2E7D32; margin-bottom:14px;">Укажите Email для получения чеков, трек-номеров Почты России и скидки 5%.</p>
+    {% if request.query_params.get('err') %}<div style="background:#FEE2E2; color:#991B1B; padding:8px; border-radius:6px; font-size:13px; margin-bottom:10px;">Логин занят или указан некорректный Email!</div>{% endif %}
+    <form action="/register" method="post" style="display:flex; flex-direction:column; gap:10px;">
+        <input name="login" required minlength="3" placeholder="Придумайте логин" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input name="email" type="email" required placeholder="Ваш Email (для чеков и трек-номеров)" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <input name="password" type="password" required minlength="4" placeholder="Придумайте пароль (мин. 4 символа)" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
+        <button type="submit" class="btn-cart">Зарегистрироваться и войти</button>
+    </form>
+</div>
+{% endblock %}

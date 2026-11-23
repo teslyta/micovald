@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:820px; margin:20px auto; padding:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <a href="/encyclopedia" style="font-size:13px; color:#2E7D32; text-decoration:none; font-weight:600;">← Все разделы энциклопедии</a>
+        {% if is_admin and undo %}<form action="/owner/undo" method="post" style="display:inline;"><button style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;padding:6px 12px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">↩ Отменить: {{ undo.label }}</button></form>{% endif %}
+    {% if is_admin %}<button type="button" onclick="let f=document.getElementById('add-lec-form'); f.style.display=f.style.display==='none'?'block':'none'" class="filter-btn active" style="cursor:pointer; background:#2E7D32;">+ Добавить следующую лекцию</button>{% endif %}
+    </div>
+
+    {% if is_admin %}
+    <div id="add-lec-form" style="display:none; margin-top:16px; padding:16px; background:#F3F6F4; border:2px solid #2E7D32; border-radius:8px;">
+        <h3 style="color:#133829; margin-bottom:10px;">Новая лекция в раздел</h3>
+        <form action="/owner/lecture" method="post" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:10px;">
+            <input type="hidden" name="topic" value="{{ slug }}">
+            <input type="hidden" name="lec_id" value="0">
+            <input name="title" required placeholder="Название новой лекции" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <textarea name="text" rows="5" placeholder="Текст лекции..." style="padding:8px; border:1px solid #ccc; border-radius:6px;"></textarea>
+            <label style="font-size:13px;">Картинка к лекции: <input type="file" name="photo" accept="image/*"></label>
+            <button type="submit" class="btn-cart" style="background:#133829; cursor:pointer;">Опубликовать новую лекцию</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="badge" style="margin-top:14px;">{{ art.cat }}</div>
+    <h1 style="color:#133829; font-size:22px; margin:8px 0;">{{ art.title }}</h1>
+    <p style="font-size:14px; color:#4B5563; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid #eee;">{{ art.desc }}</p>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+        {% for l in art.lectures %}
+        <div style="background:#F9FBFA; border:1px solid #D1DDD6; border-radius:8px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+                <h3 style="color:#133829; font-size:17px;">{{ l.title }}</h3>
+                {% if is_admin %}
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button type="button" onclick="let e=document.getElementById('ed-l-{{ l.id }}'); e.style.display=e.style.display==='none'?'flex':'none'" style="padding:4px 8px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer; font-size:12px;">✎ Изменить</button>
+                    <form action="/owner/lecture/delete" method="post" onsubmit="return confirm('Удалить эту лекцию?')" style="margin:0;">
+                        <input type="hidden" name="topic" value="{{ slug }}">
+                        <input type="hidden" name="lec_id" value="{{ l.id }}">
+                        <button type="submit" title="Удалить лекцию" style="background:none; border:none; cursor:pointer; font-size:15px;">🗑️</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% if l.img %}<img src="{{ l.img }}" style="max-width:100%; max-height:360px; border-radius:6px; margin-bottom:10px;">{% endif %}
+            {% if l.text %}<p style="font-size:14px; line-height:1.6; white-space:pre-line; color:#1F2937;">{{ l.text }}</p>{% endif %}
+
+            {% if is_admin %}
+            <form id="ed-l-{{ l.id }}" action="/owner/lecture" method="post" enctype="multipart/form-data" style="display:none; flex-direction:column; gap:8px; margin-top:12px; padding-top:12px; border-top:1px dashed #ccc;">
+                <input type="hidden" name="topic" value="{{ slug }}">
+                <input type="hidden" name="lec_id" value="{{ l.id }}">
+                <input name="title" value="{{ l.title }}" required style="padding:7px; border:1px solid #ccc; border-radius:4px;">
+                <textarea name="text" rows="4" style="padding:7px; border:1px solid #ccc; border-radius:4px;">{{ l.text }}</textarea>
+                <label style="font-size:12px;">Заменить картинку: <input type="file" name="photo" accept="image/*"></label>
+                <button type="submit" class="btn-cart" style="width:auto; margin:0; padding:6px 14px;">Сохранить правки</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

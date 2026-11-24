@@ -47,6 +47,6 @@ def send_2fa_code(target_email: str, target_phone: str, code: str, action: str =
         return "phone"
 
     if em and "@" in em:
-        send_email(em, f"[MICOVALD: Код безопасности] {code}", text)
+        send_email(em, "MICOVALD: Код подтверждения (2FA)", text)
         return "email"
     return ""

@@ -10,6 +10,7 @@
         <button type="button" class="tab-btn filter-btn" onclick="openTab('t-enc', this)">📚 Энциклопедия</button>
         <button type="button" class="tab-btn filter-btn" onclick="openTab('t-farm', this)">🌾 Обращения ({{ farmers|length }})</button>
         <button type="button" class="tab-btn filter-btn" onclick="openTab('t-sec', this)">🛡️ Безопасность и 2FA</button>
+        <button type="button" class="tab-btn filter-btn" onclick="openTab('tab-chats', this)">💬 Чаты ({{ admin_unread_chat or 0 }})</button>
     </div>
 
     <div id="t-orders" class="tab-pane card" style="border-top:4px solid #E67E22;">
@@ -98,7 +99,7 @@
     </div>
 
     <div id="t-promo" class="tab-pane card" style="display:none; border-top:4px solid #D97706;">
-        <h2 style="color:#133829; margin-bottom:10px;">🎁 Управление акциями и архив (Amazon Deals)</h2>
+        <h2 style="color:#133829; margin-bottom:10px;">🎁 Управление акциями и архив </h2>
         <form action="/owner/promo/save" method="post" style="display:flex; flex-direction:column; gap:10px; background:#FFFBEB; padding:14px; border-radius:8px; border:1px solid #F59E0B; margin-bottom:16px;">
             <b style="color:#92400E;">Запустить новую акцию (отображается слева от каталога)</b>
             <input name="title" required placeholder="Заголовок (например: Скидка 10% на все заказы на 1 день!)" style="padding:8px; border:1px solid #ccc; border-radius:6px;">
@@ -186,12 +187,58 @@
         </form>
     </div>
 </div>
+<div id="tab-chats" class="tab-pane card" style="display:none; border-top:4px solid #2E7D32;">
+    <h3 style="color:#133829; margin-bottom:12px;">💬 Диалоги с покупателями и гостями</h3>
+    {% for uname, msgs in (all_chats or {}).items() %}
+    <div class="card" style="margin-bottom:14px; border:1px solid #C6DDD0; text-align:left; align-items:stretch;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:800; color:#133829;">Покупатель: {{ uname }}</span>
+            <form action="/owner/chat-delete" method="post" style="margin:0;"><input type="hidden" name="target_user" value="{{ uname }}"><button type="submit" style="background:#FEE2E2; color:#991B1B; border:1px solid #FCA5A5; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">🗑 Закрыть и удалить чат</button></form>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; background:#F8FAF9; padding:10px; border-radius:8px; margin-bottom:10px;">
+            {% for m in msgs %}
+            <div style="padding:6px 10px; border-radius:8px; max-width:85%; {{ 'align-self:flex-start; background:#fff; border:1px solid #E5E7EB;' if m.sender=='user' else 'align-self:flex-end; background:#E8F5E9;' }}">
+                <div style="font-size:11px; color:#6B7280;">{{ uname if m.sender=='user' else 'Вы (MICOVALD)' }} • {{ m.ts }}</div>
+                <div style="font-size:13px;">{{ m.text }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <form action="/owner/chat-reply" method="post" style="display:flex; gap:8px; margin:0;">
+            <input type="hidden" name="target_user" value="{{ uname }}">
+            <input type="text" name="text" required placeholder="Ответить покупателю {{ uname }}..." style="flex:1; padding:8px; border:1px solid #ccc; border-radius:6px;">
+            <button type="submit" class="btn-cart" style="width:auto; padding:8px 18px;">Отправить ответ</button>
+        </form>
+    </div>
+    {% else %}
+    <p style="color:#6B7280;">Сообщений в чате пока нет.</p>
+    {% endfor %}
+</div>
+
 <script>
-function openTab(id, btn) {
-    document.querySelectorAll('.tab-pane').forEach(e => e.style.display = 'none');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).style.display = 'block';
-    btn.classList.add('active');
+
+function editLec(topic, id, title, text) {
+    let f = document.querySelector('#t-enc form[action="/owner/lecture-save"]');
+    if (!f) return;
+    let sel = f.querySelector('select[name="topic"]');
+    if (sel) sel.value = topic;
+    let lid = f.querySelector('input[name="lec_id"]');
+    if (!lid) { lid = document.createElement('input'); lid.type = 'hidden'; lid.name = 'lec_id'; f.prepend(lid); }
+    lid.value = id;
+    let tin = f.querySelector('input[name="title"]');
+    if (tin) tin.value = title;
+    let txa = f.querySelector('textarea[name="text"]');
+    if (txa) txa.value = text;
+    f.scrollIntoView({behavior: 'smooth'});
 }
+
+(function(){
+    let t = new URLSearchParams(location.search).get('tab');
+    let map = {orders:'t-orders', stats:'t-stats', promos:'t-promo', lectures:'t-enc', farmers:'t-farm', sec:'t-sec', chats:'tab-chats'};
+    let targetId = map[t] || t;
+    if (targetId && document.getElementById(targetId)) {
+        document.querySelectorAll('.tab-pane').forEach(e => e.style.display = 'none');
+        document.getElementById(targetId).style.display = 'block';
+    }
+})();
 </script>
 {% endblock %}

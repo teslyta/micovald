@@ -1,5 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
+{% if is_admin %}
+<div class="card" style="margin-bottom:18px; border:2px solid #133829; background:#F8FAF9; text-align:left; align-items:stretch;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+            <b style="color:#133829; font-size:16px;">★ Режим владельца и администратора MICOVALD</b>
+            <div style="font-size:13px; color:#4B5563;">Управление заказами, отчётностью КУДиР ФНС, акциями, лекциями и диалогами с покупателями.</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a href="/owner?tab=orders" class="filter-btn active" style="text-decoration:none;">📦 Заказы и КУДиР</a>
+            <a href="/owner?tab=chats" class="filter-btn" style="text-decoration:none;">💬 Чаты ({{ admin_unread_chat or 0 }})</a>
+            <a href="/owner?tab=promos" class="filter-btn" style="text-decoration:none;">🎁 Акции</a>
+            <a href="/owner?tab=lectures" class="filter-btn" style="text-decoration:none;">📚 Лекции</a>
+            <a href="/owner?tab=farmers" class="filter-btn" style="text-decoration:none;">🌾 Обращения</a>
+        </div>
+    </div>
+</div>
+{% endif %}
 <div style="max-width:780px; margin:24px auto; display:flex; flex-direction:column; gap:18px;">
     {% if request.query_params.get('welcome') %}<div style="background:#D1FAE5; color:#065F46; padding:12px; border-radius:6px; font-size:13px;"><b>✓ Добро пожаловать!</b> Ваша персональная скидка 5% активна. <a href="/" style="color:#065F46; font-weight:700;">Перейти в каталог →</a></div>{% endif %}
     {% if msg %}<div style="background:#D1FAE5; color:#065F46; padding:10px 14px; border-radius:6px; font-size:13px; font-weight:600;">✓ Изменения успешно сохранены!</div>{% endif %}

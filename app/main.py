@@ -1,3 +1,7 @@
+import urllib.parse
+import uuid
+from chat import add_chat_msg, get_user_chat, count_unread_for_user, count_unread_for_admin, load_chats, mark_admin_read, delete_chat
+from fastapi.staticfiles import StaticFiles
 from promos import get_promos, get_active_promo, save_promo, archive_promo
 import random
 import re
@@ -18,6 +22,7 @@ from undo_mgr import save_undo, get_undo, apply_undo
 from validators import validate_order_data
 
 app = FastAPI()
+app.mount("/media", StaticFiles(directory="/app/media"), name="media")
 @app.on_event("startup")
 def on_start(): check_fz109_updates()
 @app.middleware("http")
@@ -31,6 +36,7 @@ async def csrf_and_sec(request: Request, call_next):
     u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
     if request.method == "GET" and not is_admin_user(u): track_visit(vid, u, request.url.path, request.query_params.get("ordered") == "1")
     resp = await call_next(request)
+    if "text/html" in resp.headers.get("content-type", ""): resp.headers["Cache-Control"] = "no-store, must-revalidate"
     if not request.cookies.get("vid"): resp.set_cookie("vid", vid, max_age=86400, httponly=True, samesite="lax")
     return resp
 
@@ -49,17 +55,31 @@ def get_topics() -> dict:
 def get_about() -> dict:
     return json.loads(ABOUT_FILE.read_text(encoding="utf-8")) if ABOUT_FILE.exists() else {"title": "О производителе MICOVALD", "text": "", "img": ""}
 
+
+def get_chat_actor(request: Request):
+    u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
+    if u: return u, False
+    gid = request.cookies.get("guest_chat_id", "")
+    if not gid or not gid.startswith("Guest_"):
+        gid = "Guest_" + uuid.uuid4().hex[:6].upper()
+    return gid, True
+
 def ctx(request: Request, **extra):
     u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
-    return {"request": request, "tax": get_tax(), "active_promo": get_active_promo(), "user": u, "is_admin": is_admin_user(u), "tax": get_tax(), "active_promo": get_active_promo(), "undo": get_undo() if u in [k for k, v in load_users().items() if k == "admin" or v.get("role") == "admin"] else None, **extra}
+    return {"request": request, "tax": get_tax(), "used_cats": sorted({x.get("cat","") for x in get_products() if x.get("cat")}), "used_purps": sorted({x.get("purp","") for x in get_products() if x.get("purp")}), "active_promo": get_active_promo(), "unread_chat": count_unread_for_user(u), "admin_unread_chat": count_unread_for_admin(), "all_chats": (load_chats() if is_admin_user(u) else {}), "nav_topics": get_topics(), "my_chat_msgs": get_user_chat(u or request.cookies.get("guest_chat_id", ""), mark_read=False)[-8:], "nav_articles": (json.loads(Path("/app/data/encyclopedia.json").read_text(encoding="utf-8")) if Path("/app/data/encyclopedia.json").exists() else []), "valid_pairs_json": json.dumps([{"c": x.get("cat",""), "p": x.get("purp","")} for x in get_products()], ensure_ascii=False), "user": u, "is_admin": is_admin_user(u), "tax": get_tax(), "used_cats": sorted({x.get("cat","") for x in get_products() if x.get("cat")}), "used_purps": sorted({x.get("purp","") for x in get_products() if x.get("purp")}), "active_promo": get_active_promo(), "unread_chat": count_unread_for_user(u), "admin_unread_chat": count_unread_for_admin(), "all_chats": (load_chats() if is_admin_user(u) else {}), "nav_topics": get_topics(), "my_chat_msgs": get_user_chat(u or request.cookies.get("guest_chat_id", ""), mark_read=False)[-8:], "nav_articles": (json.loads(Path("/app/data/encyclopedia.json").read_text(encoding="utf-8")) if Path("/app/data/encyclopedia.json").exists() else []), "valid_pairs_json": json.dumps([{"c": x.get("cat",""), "p": x.get("purp","")} for x in get_products()], ensure_ascii=False), "undo": get_undo() if u in [k for k, v in load_users().items() if k == "admin" or v.get("role") == "admin"] else None, **extra}
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/category/{slug}", response_class=HTMLResponse)
 async def home(request: Request, slug: str = "", q: str = "", cat: str = "", purp: str = ""):
-    items = [x for x in get_products() if (not slug or x.get("slug")==slug) and (not cat or x.get("cat")==cat) and (not purp or x.get("purp")==purp) and (not q or q.lower() in x["name"].lower())]
+    items = [x for x in get_products() if (not slug or x.get("slug")==slug) and (not cat or (x.get("purp")==cat[5:] if cat.startswith("purp:") else x.get("cat")==cat)) and (not purp or x.get("purp")==purp) and (not q or q.lower() in x["name"].lower())]
     u_q = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
     if q.strip() and not items and not is_admin_user(u_q): track_missed_search(q, u_q)
-    return templates.TemplateResponse(request, "home.html", ctx(request, slug=slug, q=q, products=items, tax=get_tax(), cat=cat, purp=purp))
+    found_articles = []
+    if q.strip() and not items:
+        encs = json.loads(Path("/app/data/encyclopedia.json").read_text(encoding="utf-8")) if Path("/app/data/encyclopedia.json").exists() else []
+        ql = q.lower().strip()
+        found_articles = [a for a in encs if ql in (a.get("title","") + " " + a.get("body","") + " " + a.get("cat","")).lower()]
+    return templates.TemplateResponse(request, "home.html", ctx(request, slug=slug, q=q, products=items, found_articles=found_articles, tax=get_tax(), cat=cat, purp=purp))
 
 @app.get("/cart", response_class=HTMLResponse)
 async def cart_p(request: Request):
@@ -97,7 +117,7 @@ async def set_admin_role(request: Request, target_user: str = Form(...), make_ad
     if tu in users and tu != "admin" and (make_admin == "1" or len(admins) > 1):
         users[tu]["role"] = "admin" if make_admin == "1" else "user"
         USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2))
-    return RedirectResponse("/owner?msg=1", 303)
+    return RedirectResponse("/owner?tab=sec&msg=1", 303)
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_p(request: Request, err: str = ""):
@@ -139,7 +159,7 @@ async def acc_p(request: Request, msg: str = ""):
     u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
     if not u: return RedirectResponse("/login", 303)
     my_orders = [x for x in get_records() if x.get("source") == u]
-    return templates.TemplateResponse(request, "account.html", ctx(request, msg=msg, prof=load_users().get(u, {}), my_orders=my_orders, farmers=get_farmers()))
+    return templates.TemplateResponse(request, "account.html", ctx(request, recs=get_records(), stats=get_stats(), promos=get_promos(), topics=get_topics(), all_chats=load_chats(), msg=msg, prof=load_users().get(u, {}), my_orders=my_orders, farmers=get_farmers()))
 
 @app.post("/account/profile")
 async def save_prof(request: Request, fio: str = Form(""), email: str = Form(...), phone: str = Form("")):
@@ -206,7 +226,7 @@ async def ch_pass(request: Request, new_password: str = Form(...), otp: str = Fo
 async def order_get_redir(): return RedirectResponse("/cart", 303)
 
 @app.post("/order/create")
-async def create_order(request: Request, fio: str = Form(...), phone: str = Form(...), email: str = Form(...), zip_code: str = Form(...), address: str = Form(...), total: int = Form(...), summary: str = Form(...)):
+async def create_order(request: Request, fio: str = Form(...), phone: str = Form(...), email: str = Form(...), zip_code: str = Form(...), address: str = Form(...), total: int = Form(...), summary: str = Form(...), cart_json: str = Form("[]")):
     err = validate_order_data(fio, phone, zip_code, address)
     if "@" not in email: err = "Укажите корректный Email для получения чека"
     if total <= 0 or err: return RedirectResponse(f"/cart?err={urllib.parse.quote(err or 'Корзина пуста')}", 303)
@@ -239,10 +259,10 @@ async def owner_p(request: Request, msg: str = ""):
     inc = sum(x["amount"] for x in recs if x["type"]=="Приход" and x.get("status") in ("Оплачен", "Отправлен", "Доставлен", "Проведено") and x.get("source") != "admin" and "тест" not in x.get("fio", "").lower())
     exp = sum(x["amount"] for x in recs if x["type"]=="Расход")
     adm = load_users().get("admin", {})
-    return templates.TemplateResponse(request, "owner.html", ctx(request, topics=get_topics(), farmers=get_farmers(), msg=msg, recs=recs, inc=inc, exp=exp, adm_2fa=adm.get("2fa", False), all_users=load_users(), stats=get_stats(), promos=get_promos()))
+    return templates.TemplateResponse(request, "owner.html", ctx(request, all_chats=load_chats(), topics=get_topics(), farmers=get_farmers(), msg=msg, recs=recs, inc=inc, exp=exp, adm_2fa=adm.get("2fa", False), all_users=load_users(), stats=get_stats(), promos=get_promos()))
 
 @app.post("/owner/lecture")
-async def save_lec(request: Request, topic: str = Form(...), new_cat: str = Form(""), new_desc: str = Form(""), lec_id: int = Form(0), title: str = Form(...), text: str = Form(""), photo: UploadFile = File(None)):
+async def save_lec(request: Request, topic: str = Form(...), new_cat: str = Form(""), new_desc: str = Form(""), lec_id: int = Form(0), title: str = Form(...), text: str = Form(""), photo: UploadFile = File(None), extra_photos: list[UploadFile] = File(None)):
     if not is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): return RedirectResponse("/login", 303)
     data = get_topics()
     if topic == "__new__" and new_cat.strip():
@@ -274,6 +294,14 @@ async def del_lec(request: Request, topic: str = Form(...), lec_id: int = Form(.
 async def add_product(request: Request, name: str = Form(...), desc: str = Form(""), slug: str = Form(...), price: int = Form(...), photo: UploadFile = File(...)):
     if not is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): return RedirectResponse("/login", 303)
     if check_stop_words(f"{name} {desc}"): return RedirectResponse("/", 303)
+    imgs_list = list(old.get("images") or ([img_url] if img_url else []))
+    if img_url and (not imgs_list or imgs_list != img_url):
+        if imgs_list: imgs_list = img_url
+        else: imgs_list.append(img_url)
+    for ep in (extra_photos or []):
+        if ep and getattr(ep, "filename", ""):
+            u_ep = await save_safe_image(ep, "products")
+            if u_ep and u_ep not in imgs_list: imgs_list.append(u_ep)
     save_undo(PROD_FILE, "добавление товара", "/")
     save_product({"name": name, "desc": desc, "slug": slug, "cat": "Субстраты почвенные" if slug == "substrates" else "Наборы и комплекты", "price": price, "img": await save_safe_image(photo, "products")})
     return RedirectResponse("/", 303)
@@ -286,7 +314,7 @@ async def del_prod(request: Request, pid: int):
     return RedirectResponse("/", 303)
 
 @app.post("/owner/about")
-async def save_about(request: Request, title: str = Form(...), text: str = Form(...), photo: UploadFile = File(None)):
+async def save_about(request: Request, title: str = Form(...), text: str = Form(...), photo: UploadFile = File(None), extra_photos: list[UploadFile] = File(None)):
     if not is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): return RedirectResponse("/login", 303)
     ab = get_about(); ab["title"], ab["text"] = title, text
     if photo and photo.filename: ab["img"] = await save_safe_image(photo, "about")
@@ -297,19 +325,19 @@ async def save_about(request: Request, title: str = Form(...), text: str = Form(
 async def owner_fin(request: Request, ftype: str = Form(...), amount: int = Form(...), note: str = Form(...)):
     if is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))):
         save_undo(FIN_FILE, "добавление записи", "/owner"); add_manual(ftype, amount, note)
-    return RedirectResponse("/owner?msg=1", 303)
+    return RedirectResponse("/owner?tab=sec&msg=1", 303)
 
 @app.post("/owner/order/paid/{oid}")
 async def owner_ord_paid(request: Request, oid: int):
     if is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))):
         save_undo(FIN_FILE, "подтверждение оплаты", "/owner"); mark_paid(oid)
-    return RedirectResponse("/owner?msg=1", 303)
+    return RedirectResponse("/owner?tab=sec&msg=1", 303)
 
 @app.post("/owner/order/edit/{oid}")
 async def owner_ord_edit(request: Request, oid: int, fio: str = Form(...), phone: str = Form(...), zip_code: str = Form(...), address: str = Form(...), status: str = Form(...), track: str = Form("")):
     if is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))):
         save_undo(FIN_FILE, "изменение заказа", "/owner"); update_order(oid, fio, phone, zip_code, address, status, track)
-    return RedirectResponse("/owner?msg=1", 303)
+    return RedirectResponse("/owner?tab=sec&msg=1", 303)
 
 @app.post("/owner/order/refund/{oid}")
 async def owner_ord_refund(request: Request, oid: int):
@@ -327,19 +355,19 @@ async def owner_ord_del(request: Request, oid: int):
 async def owner_farm_del(request: Request, fid: int):
     if is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))):
         save_undo(FARM_FILE, "удаление обращения", "/owner"); del_farmer(fid)
-    return RedirectResponse("/owner?msg=1", 303)
+    return RedirectResponse("/owner?tab=sec&msg=1", 303)
 
 @app.get("/owner/export.csv")
 async def owner_csv(request: Request):
     if not is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): return RedirectResponse("/login", 303)
-    return Response("\ufeff" + export_kudir_csv(), media_type="text/csv; charset=utf-8", headers={"Content-Disposition": "attachment; filename=KUDiR_MICOVALD_FNS.csv"})
+    return Response("\ufeff" + export_kudir_csv(), media_type="text/csv; charset=utf-8", headers={"Content-Disposition": f"attachment; filename=KUDiR_MICOVALD_FNS_{time.strftime('%Y-%m-%d')}.csv"})
 
 @app.post("/owner/2fa")
 async def toggle_2fa(request: Request, enable: str = Form("0")):
     if is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))):
         users = load_users(); users["admin"]["2fa"] = (enable == "1")
         USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2))
-    return RedirectResponse("/owner?msg=1", 303)
+    return RedirectResponse("/owner?tab=sec&msg=1", 303)
 
 @app.post("/owner/undo")
 async def do_undo(request: Request):
@@ -351,17 +379,23 @@ async def logout():
     r = RedirectResponse("/", 303); r.delete_cookie("user"); return r
 
 @app.post("/owner/product-save")
-async def save_prod_full(request: Request, pid: int = Form(0), name: str = Form(...), desc: str = Form(""), price: int = Form(...), cat: str = Form(...), new_cat: str = Form(""), purp: str = Form(...), new_purp: str = Form(""), photo: UploadFile = File(None)):
+async def save_prod_full(request: Request, pid: int = Form(0), name: str = Form(...), desc: str = Form(""), price: int = Form(...), stock: int = Form(1), cat: str = Form(""), new_cat: str = Form(""), purp: str = Form(""), new_purp: str = Form(""), photo: UploadFile = File(None), extra_photos: list[UploadFile] = File(None)):
     if not is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): return RedirectResponse("/login", 303)
     c_val = new_cat.strip() or cat
     p_val = new_purp.strip() or purp
-    if check_stop_words(f"{name} {desc} {c_val} {p_val}"): return RedirectResponse("/?err=stop", 303)
+    sw_hit = check_stop_words(f"{name} {desc} {c_val} {p_val}")
+    if sw_hit: return RedirectResponse(f"/product/{pid}?err_sw={urllib.parse.quote(sw_hit)}" if pid > 0 else f"/?err=stop&sw={urllib.parse.quote(sw_hit)}", 303)
     if new_cat.strip(): add_tax("directions", c_val)
     if new_purp.strip(): add_tax("purposes", p_val)
     old = next((x for x in get_products() if x["id"] == pid), {}) if pid > 0 else {}
-    img_url = await save_safe_image(photo, "products") if (photo and photo.filename) else old.get("img", "/media/products/p1.webp")
+    img_url = await save_safe_image(photo, "products") if (photo and getattr(photo, "filename", "")) else old.get("img", "/media/products/p1.webp")
+    imgs_list = [img_url] + [x for x in (old.get("images") or []) if x and x != img_url]
+    for ep in (extra_photos or []):
+        if ep and getattr(ep, "filename", ""):
+            u_ep = await save_safe_image(ep, "products")
+            if u_ep and u_ep not in imgs_list: imgs_list.append(u_ep)
     save_undo(PROD_FILE, "изменение каталога", "/")
-    save_product({"name": name, "desc": desc, "slug": "substrates" if "субстрат" in c_val.lower() else "sets", "cat": c_val, "purp": p_val, "price": price, "img": img_url}, pid)
+    save_product({"name": name, "desc": desc, "slug": "substrates" if "субстрат" in c_val.lower() else "sets", "cat": c_val, "purp": p_val, "price": price, "stock": max(0, int(stock)), "img": img_url, "images": imgs_list}, pid)
     return RedirectResponse("/", 303)
 
 @app.post("/owner/stopword/add")
@@ -376,7 +410,7 @@ async def clear_test_data(request: Request):
     save_records([r for r in get_records() if r.get("source") not in ("admin", "test") and "тест" not in r.get("fio", "").lower() and r.get("status") not in ("Тестовый заказ", "Оплачен (Тест)")])
     from analytics import STAT_FILE, atomic_save
     atomic_save(STAT_FILE, {"visits": {}, "missed": []})
-    return RedirectResponse("/owner?msg=1", 303)
+    return RedirectResponse("/owner?tab=sec&msg=1", 303)
 
 @app.get("/api/addr-suggest")
 async def addr_suggest(q: str = ""):
@@ -412,16 +446,16 @@ async def user_toggle_2fa(request: Request, enable: str = Form("0")):
     return RedirectResponse("/account?msg=1", 303)
 
 @app.post("/owner/promo/save")
-async def owner_promo_save(request: Request, pid: int = Form(0), title: str = Form(...), desc: str = Form(...), discount: int = Form(10), start_date: str = Form(...), end_date: str = Form(...)):
+async def owner_promo_save(request: Request, pid: int = Form(0), title: str = Form(...), desc: str = Form(...), discount: int = Form(10), start_date: str = Form(...), end_date: str = Form(...), target_cat: str = Form("")):
     if not is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): return RedirectResponse("/login", 303)
     if check_stop_words(f"{title} {desc}"): return RedirectResponse("/owner?err=stop", 303)
-    save_promo(pid, title, desc, discount, start_date, end_date)
-    return RedirectResponse("/owner?msg=1", 303)
+    save_promo(pid, title, desc, discount, start_date, end_date, target_cat)
+    return RedirectResponse("/owner?tab=sec&msg=1", 303)
 
 @app.post("/owner/promo/archive/{pid}")
 async def owner_promo_arch(request: Request, pid: int):
     if is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): archive_promo(pid)
-    return RedirectResponse("/owner?msg=1", 303)
+    return RedirectResponse("/owner?tab=sec&msg=1", 303)
 
 @app.get("/promos", response_class=HTMLResponse)
 async def promos_page(request: Request):
@@ -429,3 +463,56 @@ async def promos_page(request: Request):
     today = datetime.now().strftime("%Y-%m-%d")
     act = [p for p in get_promos() if p.get("active") and p.get("start_date", "") <= today <= p.get("end_date", "9999-12-31")]
     return templates.TemplateResponse(request, "promos.html", ctx(request, active_promos=act))
+
+@app.get("/product/{pid}", response_class=HTMLResponse)
+async def product_detail(request: Request, pid: int):
+    prod = next((x for x in get_products() if x.get("id") == pid), None)
+    if not prod: return RedirectResponse("/", 303)
+    st = json.loads(Path("/app/data/analytics.json").read_text(encoding="utf-8")) if Path("/app/data/analytics.json").exists() else {}
+    real_views = st.get("visits", {}).get(f"/product/{pid}", 0) + st.get("visits", {}).get("/", 0)
+    return templates.TemplateResponse(request, "product.html", ctx(request, p=prod, real_views=real_views, articles=get_topics()))
+
+@app.get("/chat", response_class=HTMLResponse)
+async def chat_page(request: Request, prod: str = ""):
+    u_chk = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
+    if is_admin_user(u_chk): return RedirectResponse("/owner?tab=chats", 303)
+    actor, is_guest = get_chat_actor(request)
+    resp = templates.TemplateResponse(request, "chat.html", ctx(request, messages=get_user_chat(actor, mark_read=True), prod_q=prod))
+    if is_guest: resp.set_cookie("guest_chat_id", actor, max_age=86400*30, httponly=True, samesite="lax")
+    return resp
+
+@app.post("/chat/send")
+async def chat_send(request: Request, text: str = Form(...), prod_name: str = Form(""), guest_name: str = Form("")):
+    actor, is_guest = get_chat_actor(request)
+    label = f"{actor} ({guest_name.strip()})" if (is_guest and guest_name.strip()) else actor
+    add_chat_msg(actor, "user", text, prod_name)
+    try:
+        from notifier import send_email, get_cfg
+        to_m = get_cfg().get("SMTP_USER", "").strip() or "micovald@yandex.ru"
+        send_email(to_m, f"Чат: {label}", f"Покупатель {label} написал в чат:\n{text}\nТовар: {prod_name or 'Общий вопрос'}")
+    except Exception: pass
+    ref = (request.headers.get("referer") or "/").split("#")[0]
+    sep = "&" if "?" in ref else "?"
+    if "chat_open=1" not in ref and "/chat" not in ref: ref = f"{ref}{sep}chat_open=1"
+    resp = RedirectResponse(ref, 303)
+    if is_guest: resp.set_cookie("guest_chat_id", actor, max_age=86400*30, httponly=True, samesite="lax")
+    return resp
+
+@app.post("/owner/chat-reply")
+async def owner_chat_reply(request: Request, target_user: str = Form(...), text: str = Form(...)):
+    u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
+    if not is_admin_user(u): return RedirectResponse("/login", 303)
+    add_chat_msg(target_user, "admin", text)
+    mark_admin_read, delete_chat(target_user)
+    return RedirectResponse("/owner?tab=farmers", 303)
+
+@app.get("/favorites", response_class=HTMLResponse)
+async def favorites_page(request: Request):
+    return templates.TemplateResponse(request, "favorites.html", ctx(request))
+
+@app.post("/owner/chat-delete")
+async def owner_chat_delete(request: Request, target_user: str = Form(...)):
+    u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
+    if not is_admin_user(u): return RedirectResponse("/login", 303)
+    delete_chat(target_user)
+    return RedirectResponse("/owner?tab=chats", 303)

@@ -32,6 +32,16 @@ def run_tests():
     from promos import save_promo, get_active_promo, archive_promo
     save_promo(0, "Тест акция", "Условия теста", 15, "2020-01-01", "2020-01-02")
     assert get_active_promo() is None, "Просроченная акция не ушла в архив!"
+    home_html = client.get("/").text
+    assert "viewport" in home_html and "repeat(2, minmax(0, 1fr))" in client.get("/media/style.css").text, "Нет мобильной адаптации!"
+    assert client.get("/media/products/p1.webp").status_code == 200, "Картинки товаров не отдаются!"
+    for pr in ["Для почвы", "Теплица и рассада", "Открытый грунт и сад"]:
+        assert "Не найдено" not in client.get(f"/?cat=purp:{pr}").text and "₽" in client.get(f"/?cat=purp:{pr}").text, f"Пустой фильтр {pr}!"
+    assert "MICOVALD: Код подтверждения (2FA)" in open("/app/notifier.py").read(), "Изменилась тема 2FA!"
+    from main import get_products
+    p0 = get_products()
+    assert client.get(f"/product/{next(iter(p0))['id']}").status_code == 200, "Ошибка карточки товара!"
+    assert client.get("/chat").status_code == 200, "Чат должен быть доступен без авторизации!"
     print("✅ ВСЕ АВТОТЕСТЫ (ВСЕ СТРАНИЦЫ, МЕНЮ БЕЗ ДУБЛЕЙ, БЕЗОПАСНОСТЬ, ФИЛЬТР) ПРОЙДЕНЫ!")
 
 if __name__ == "__main__":

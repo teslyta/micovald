@@ -4,59 +4,315 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MICOVALD — Почвенные субстраты для активизации полезной микрофлоры</title>
-    <link rel="stylesheet" href="/media/style.css">
+    <link rel="stylesheet" href="/media/style.css?v=30">
 </head>
 <body>
-<header>
+<a href="#main-content" class="skip-link">Перейти к основному содержанию</a>
+<header role="banner">
     <div class="header-top">
-        <a href="/" class="logo">🌿 MICOVALD</a>
-        <form class="search-bar" action="/" method="get">
-            <input type="text" name="q" value="{{ q or '' }}" placeholder="Поиск: Миковальд СП, НС, наборы...">
-            <button type="submit">🔍</button>
+        <div style="display:flex; flex-direction:column;">
+            <a href="/" class="logo" aria-label="MICOVALD — На главную страницу">🌿 MICOVALD</a>
+            <span style="font-size:11px; color:#A7F3D0; opacity:0.95; line-height:1.25; margin-top:2px;">Природный субстрат<br>Не пестицид и не агрохимикат</span>
+        </div>
+
+        <form class="amz-search" action="/" method="get" role="search" aria-label="Поиск товаров по каталогу">
+            <select name="cat" class="amz-cat" onchange="this.form.submit()" aria-label="Выберите категорию для поиска">
+                <option value="">Все категории</option>
+                <optgroup label="Направление">
+                    {% for d in (used_cats or []) %}<option value="{{ d }}" {{ 'selected' if cat==d }}>{{ d }}</option>{% endfor %}
+                </optgroup>
+                <optgroup label="Назначение">
+                    {% for pr in (used_purps or []) %}<option value="purp:{{ pr }}" {{ 'selected' if cat==('purp:' ~ pr) }}>{{ pr }}</option>{% endfor %}
+                </optgroup>
+            </select>
+            <input type="text" name="q" value="{{ q or '' }}" placeholder="Поиск по каталогу MICOVALD..." aria-label="Поисковый запрос">
+            <button type="submit" class="amz-submit" aria-label="Найти товары">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#133829" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
         </form>
+
         <div class="nav-links">
             {% if user %}
-                <a href="/account" >👤 Личный кабинет ({{ user }})</a>
-                <a href="/logout" style="opacity:0.85; font-size:12px;">Выйти</a>
+                <a href="/chat" class="amz-acc" title="Уведомления и чат с производителем" aria-label="Уведомления и чат с производителем" style="position:relative; display:inline-flex; flex-direction:row; align-items:center; gap:5px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    {% if unread_chat and unread_chat > 0 %}<span style="background:#DC2626; color:#fff; font-size:11px; font-weight:800; padding:1px 5px; border-radius:10px;">{{ unread_chat }}</span>{% endif %}
+                </a>
+                <div class="amz-drop-wrap">
+                    <a href="/account" class="amz-acc" aria-label="Личный кабинет пользователя {{ user }}">
+                        <span style="font-size:11px; color:#A7F3D0; font-weight:400;">Здравствуйте, {{ user }}</span>
+                        <span>Аккаунт и заказы ▾</span>
+                    </a>
+                    <div class="amz-dropdown amz-dropdown-right">
+                        {% if is_admin %}
+                        <div style="border-top:1px solid #E5E7EB; margin:4px 0; padding:4px 14px 2px; font-size:10px; font-weight:800; color:#6B7280; text-transform:uppercase;">Управление магазином</div>
+                        <a href="/owner?tab=orders">📦 Заказы и КУДиР ФНС</a>
+                        <a href="/owner?tab=stats">📊 Статистика и диаграммы</a>
+                        <a href="/owner?tab=promos">🎁 Управление акциями</a>
+                        <a href="/owner?tab=lectures">📚 Управление лекциями</a>
+                        <a href="/owner?tab=farmers">🌾 Обращения хозяйств</a>
+                        <a href="/owner?tab=chats">💬 Чаты с покупателями ({{ admin_unread_chat or 0 }})</a>
+                        <a href="/owner?tab=sec">🛡️ Безопасность и 2FA</a>
+                        {% endif %}
+                        <a href="/account">📦 Мои заказы и профили</a>
+                        <a href="/favorites">❤️ Избранное (<span id="fav-count">0</span>)</a>
+                        <a href="/chat">💬 Переписка с производителем</a>
+                        <a href="/logout" style="color:#DC2626 !important; border-top:1px solid #E5E7EB;">🚪 Выйти из аккаунта</a>
+                    </div>
+                </div>
             {% else %}
-                <a href="/login" >👤 Личный кабинет (Войти)</a>
+                <a href="/login" class="amz-acc" aria-label="Войти или зарегистрироваться со скидкой 5%">
+                    <span style="font-size:11px; color:#A7F3D0; font-weight:400;">Здравствуйте, Войти</span>
+                    <span>Аккаунт и заказы</span>
+                </a>
             {% endif %}
-            <a href="/cart" class="cart-btn">🛒 Корзина (<span id="cart-count">0</span>)</a>
+            <a href="/favorites" class="amz-acc" title="Избранные товары" aria-label="Избранные товары" style="position:relative; display:inline-flex; flex-direction:row; align-items:center; gap:4px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span id="hdr-fav-count" style="font-size:12px; font-weight:800; color:#FBBF24;">0</span></a>
+            <a href="/cart" class="amz-cart" aria-label="Корзина покупок">
+                <div class="amz-cart-icon">
+                    <span id="cart-count" class="amz-cart-num" aria-live="polite">0</span>
+                    <svg width="28" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1.2"/><circle cx="20" cy="21" r="1.2"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                </div>
+                <span class="amz-cart-label">Корзина</span>
+            </a>
         </div>
     </div>
-    <nav class="sub-nav">
+    <nav class="sub-nav" style="padding-right:24px;">
         <a href="/">Каталог</a>
         <a href="/category/substrates">Субстраты почвенные</a>
         <a href="/category/sets">Наборы и комплекты</a>
-        <a href="/encyclopedia">Энциклопедия и лекции</a>
+        <div class="amz-drop-wrap">
+            <a href="/encyclopedia">Энциклопедия и лекции ▾</a>
+            <div class="amz-dropdown">
+                <a href="/encyclopedia" style="font-weight:800; color:#133829 !important; border-bottom:1px solid #E5E7EB;">📚 Все лекции и статьи →</a>
+                {% for slug, art in (nav_topics or {}).items() %}
+                <a href="/encyclopedia/{{ slug }}">{{ art.title }}</a>
+                {% endfor %}
+            </div>
+        </div> </div>
         <a href="/about">О производителе</a>
         <a href="/farmers">Для фермеров</a>
-        <a href="/promos" style="color:#FBBF24; font-weight:700;">🎁 Акции</a> · <a href="/how-to-order">Как заказать</a>
+        <a href="/promos" style="color:#FBBF24; font-weight:700;">🎁 Акции</a>
+        <a href="/how-to-order" style="padding-right:16px;">Как заказать</a>
         {% if is_admin %}
             <a href="/owner" style="color:#FCD34D;">★ Кабинет владельца</a>
         {% endif %}
+    <span class="nav-spacer" style="min-width:20px; display:inline-block;">&nbsp;</span>
     </nav>
 </header>
 {% if is_admin and stop_sug %}<div style="background:#FEF3C7; color:#92400E; padding:8px 20px; font-size:13px; border-bottom:1px solid #F59E0B; display:flex; align-items:center; gap:10px; flex-wrap:wrap;"><b>⚖ Обновление 109-ФЗ (стоп-лист):</b> найдены новые термины для запрета:{% for w in stop_sug %}<form action="/owner/stopword/add" method="post" style="display:inline;margin:0;"><input type="hidden" name="word" value="{{ w }}"><button style="background:#92400E;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:12px;">+ Добавить «{{ w }}»</button></form>{% endfor %}</div>{% endif %}
-<div class="container">{% block content %}{% endblock %}</div>
-<footer style="background:#133829; color:#D1DDD6; margin-top:40px; padding:28px 20px; font-size:13px;">
+
+<main id="main-content" role="main" class="container">{% block content %}{% endblock %}</main>
+<footer role="contentinfo" style="background:#133829; color:#D1DDD6; margin-top:40px; padding:28px 20px; font-size:13px;">
     <div style="max-width:1280px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:20px;">
         <div><b style="color:#fff; font-size:15px;">🌿 MICOVALD</b><p style="margin-top:6px; line-height:1.5;">Почвенные субстраты для активизации полезной микрофлоры. Российское производство (г. Санкт-Петербург).</p></div>
         <div style="display:flex; flex-direction:column; gap:6px;"><b style="color:#fff;">Навигация</b><a href="/" style="color:#D1DDD6; text-decoration:none;">Каталог продукции</a><a href="/about" style="color:#D1DDD6; text-decoration:none;">О производителе</a><a href="/encyclopedia" style="color:#D1DDD6; text-decoration:none;">Энциклопедия и лекции</a><a href="/farmers" style="color:#D1DDD6; text-decoration:none;">Для фермеров и хозяйств</a></div>
-        <div style="display:flex; flex-direction:column; gap:6px;"><b style="color:#fff;">Покупателям и связь</b><a href="/promos" style="color:#FBBF24; font-weight:700;">🎁 Акции</a> · <a href="/how-to-order" style="color:#D1DDD6; text-decoration:none;">Как заказать и контакты</a><a href="/farmers" style="color:#FCD34D; text-decoration:none; font-weight:600;">✉ Форма обратной связи →</a><span>Доставка: Почта России • Оплата: ЮMoney</span></div>
+        <div style="display:flex; flex-direction:column; gap:6px;"><b style="color:#fff;">Покупателям и связь</b><a href="/promos" style="color:#FBBF24; font-weight:700;">🎁 Акции</a><a href="/how-to-order" style="color:#D1DDD6; text-decoration:none;">Как заказать и контакты</a><a href="/farmers" style="color:#FCD34D; text-decoration:none; font-weight:600;">✉ Форма обратной связи →</a><span>Доставка: Почта России • Оплата: ЮMoney</span></div>
     </div>
     <div style="max-width:1280px; margin:18px auto 0; padding-top:12px; border-top:1px solid #235742; font-size:12px; color:#9CA3AF;">© 2026 MICOVALD. Продукция не относится к пестицидам и агрохимикатам.</div>
 </footer>
+
+<div style="position:fixed !important; right:20px !important; bottom:20px !important; left:auto !important; top:auto !important; z-index:99990;">
+    <div id="mico-chat-box" style="display:none; position:fixed; right:20px; bottom:84px; width:320px; max-width:calc(100vw - 32px); background:#FFFFFF; border:1px solid #C6DDD0; border-radius:14px; box-shadow:0 12px 32px rgba(14,43,32,0.28); overflow:hidden; z-index:9995;">
+        <div style="background:#133829; color:#fff; padding:10px 14px; font-weight:700; font-size:13px; display:flex; justify-content:space-between; align-items:center;">
+            <span>💬 Чат с производителем</span>
+            <button type="button" onclick="toggleChatBox()" aria-label="Закрыть чат" style="background:none; border:none; color:#fff; font-size:16px; font-weight:700; cursor:pointer;">✕</button>
+        </div>
+        {% if is_admin %}
+            {% if all_chats %}
+            <div style="padding:8px 10px; background:#F3F8F5; border-bottom:1px solid #DCE7E1; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                <select id="adm-chat-sel" onchange="switchAdmChat(this.value)" style="flex:1; padding:5px 8px; border:1px solid #C6DDD0; border-radius:6px; font-size:12px; font-weight:700; color:#133829; background:#fff;">
+                    {% for cname, cmsgs in all_chats.items() %}
+                    <option value="{{ cname }}">{{ cname }} ({{ cmsgs|length }})</option>
+                    {% endfor %}
+                </select>
+                <a href="/owner?tab=chats" style="font-size:11px; color:#2E7D32; font-weight:700; text-decoration:none; white-space:nowrap;">Все →</a>
+            </div>
+            {% for cname, cmsgs in all_chats.items() %}
+            <div class="adm-chat-pane" data-cname="{{ cname }}" style="display:{{ 'block' if loop.first else 'none' }};">
+                <div style="padding:10px; height:195px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; background:#F8FAF9; font-size:12px;">
+                    {% for m in cmsgs[-10:] %}
+                    <div style="padding:6px 10px; border-radius:8px; max-width:88%; {{ 'align-self:flex-start; background:#fff; border:1px solid #E5E7EB;' if m.sender=='user' else 'align-self:flex-end; background:#E8F5E9;' }}">
+                        <div style="font-size:10px; color:#6B7280;">{{ cname if m.sender=='user' else 'Вы' }} • {{ m.ts }}</div>
+                        <div style="color:#111827;">{{ m.text }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <form action="/owner/chat-reply" method="post" style="padding:8px; border-top:1px solid #E5E7EB; display:flex; gap:6px; background:#fff; margin:0;">
+                    <input type="hidden" name="target_user" value="{{ cname }}">
+                    <input type="text" name="text" required placeholder="Ответить {{ cname }}..." style="flex:1; padding:7px 9px; border:1px solid #C6DDD0; border-radius:6px; font-size:12px; min-width:0;">
+                    <button type="submit" style="background:#2E7D32; color:#fff; border:none; border-radius:6px; padding:0 12px; font-weight:700; cursor:pointer;">➤</button>
+                </form>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="padding:20px 12px; text-align:center; font-size:12px; color:#6B7280; background:#F8FAF9;">Сообщений от покупателей пока нет.</div>
+            {% endif %}
+        {% elif user %}
+        <div style="padding:10px; height:210px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; background:#F8FAF9; font-size:12px;">
+            {% for m in (my_chat_msgs or []) %}
+            <div style="padding:6px 10px; border-radius:8px; max-width:88%; {{ 'align-self:flex-end; background:#E8F5E9;' if m.sender=='user' else 'align-self:flex-start; background:#fff; border:1px solid #E5E7EB;' }}">
+                <div style="font-size:10px; color:#6B7280;">{{ 'Вы' if m.sender=='user' else 'MICOVALD' }} • {{ m.ts }}</div>
+                <div style="color:#111827;">{{ m.text }}</div>
+            </div>
+            {% else %}
+            <div style="color:#6B7280; text-align:center; padding:24px 8px;">Напишите нам — производитель ответит вам прямо здесь.</div>
+            {% endfor %}
+        </div>
+        <form action="/chat/send" method="post" style="padding:8px; border-top:1px solid #E5E7EB; display:flex; gap:6px; background:#fff; margin:0;">
+            <input type="text" name="text" required placeholder="Написать сообщение..." style="flex:1; padding:7px 9px; border:1px solid #C6DDD0; border-radius:6px; font-size:12px; min-width:0;">
+            <button type="submit" style="background:#2E7D32; color:#fff; border:none; border-radius:6px; padding:0 12px; font-weight:700; cursor:pointer;">➤</button>
+        </form>
+        {% else %}
+        <div style="padding:10px; height:195px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; background:#F8FAF9; font-size:12px;">
+            {% for m in (my_chat_msgs or []) %}
+            <div style="padding:6px 10px; border-radius:8px; max-width:88%; {{ 'align-self:flex-end; background:#E8F5E9;' if m.sender=='user' else 'align-self:flex-start; background:#fff; border:1px solid #E5E7EB;' }}">
+                <div style="font-size:10px; color:#6B7280;">{{ 'Вы' if m.sender=='user' else 'MICOVALD' }} • {{ m.ts }}</div>
+                <div style="color:#111827;">{{ m.text }}</div>
+            </div>
+            {% else %}
+            <div style="color:#6B7280; text-align:center; padding:18px 8px;">Задайте любой вопрос производителю — авторизация не требуется.</div>
+            {% endfor %}
+        </div>
+        <form action="/chat/send" method="post" style="padding:8px; border-top:1px solid #E5E7EB; display:flex; flex-direction:column; gap:5px; background:#fff; margin:0;">
+            <input type="text" name="guest_name" placeholder="Ваше имя (необязательно)" style="padding:6px 8px; border:1px solid #DCE7E1; border-radius:6px; font-size:11px;">
+            <div style="display:flex; gap:6px;">
+                <input type="text" name="text" required placeholder="Написать сообщение..." style="flex:1; padding:7px 9px; border:1px solid #C6DDD0; border-radius:6px; font-size:12px; min-width:0;">
+                <button type="submit" aria-label="Отправить сообщение" style="background:#2E7D32; color:#fff; border:none; border-radius:6px; padding:0 12px; font-weight:700; cursor:pointer;">➤</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+    <button type="button" onclick="toggleChatBox()" style="background:none; border:none; color:#fff; font-size:16px; font-weight:700; cursor:pointer;">✕</button>
+        </div>
+        {% if is_admin %}
+        <div style="padding:12px; font-size:13px; color:#1A2421; background:#F8FAF9;">
+            <p style="margin-bottom:8px;">Непрочитанных сообщений: <b style="color:#DC2626;">{{ admin_unread_chat or 0 }}</b></p>
+            <a href="/owner?tab=chats" class="btn-cart" style="display:block; text-align:center; text-decoration:none; padding:8px; font-size:12px;">Открыть диалоги →</a>
+        </div>
+        {% elif user %}
+        <div style="padding:10px; height:210px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; background:#F8FAF9; font-size:12px;">
+            {% for m in (my_chat_msgs or []) %}
+            <div style="padding:6px 10px; border-radius:8px; max-width:88%; {{ 'align-self:flex-end; background:#E8F5E9;' if m.sender=='user' else 'align-self:flex-start; background:#fff; border:1px solid #E5E7EB;' }}">
+                <div style="font-size:10px; color:#6B7280;">{{ 'Вы' if m.sender=='user' else 'MICOVALD' }} • {{ m.ts }}</div>
+                <div style="color:#111827;">{{ m.text }}</div>
+            </div>
+            {% else %}
+            <div style="color:#6B7280; text-align:center; padding:24px 8px;">Напишите нам — производитель ответит вам прямо здесь.</div>
+            {% endfor %}
+        </div>
+        <form action="/chat/send" method="post" style="padding:8px; border-top:1px solid #E5E7EB; display:flex; gap:6px; background:#fff; margin:0;">
+            <input type="text" name="text" required placeholder="Написать сообщение..." style="flex:1; padding:7px 9px; border:1px solid #C6DDD0; border-radius:6px; font-size:12px; min-width:0;">
+            <button type="submit" style="background:#2E7D32; color:#fff; border:none; border-radius:6px; padding:0 12px; font-weight:700; cursor:pointer;">➤</button>
+        </form>
+        {% else %}
+        <div style="padding:10px; height:195px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; background:#F8FAF9; font-size:12px;">
+            {% for m in (my_chat_msgs or []) %}
+            <div style="padding:6px 10px; border-radius:8px; max-width:88%; {{ 'align-self:flex-end; background:#E8F5E9;' if m.sender=='user' else 'align-self:flex-start; background:#fff; border:1px solid #E5E7EB;' }}">
+                <div style="font-size:10px; color:#6B7280;">{{ 'Вы' if m.sender=='user' else 'MICOVALD' }} • {{ m.ts }}</div>
+                <div style="color:#111827;">{{ m.text }}</div>
+            </div>
+            {% else %}
+            <div style="color:#6B7280; text-align:center; padding:18px 8px;">Задайте любой вопрос производителю — авторизация не требуется.</div>
+            {% endfor %}
+        </div>
+        <form action="/chat/send" method="post" style="padding:8px; border-top:1px solid #E5E7EB; display:flex; flex-direction:column; gap:5px; background:#fff; margin:0;">
+            <input type="text" name="guest_name" placeholder="Ваше имя (необязательно)" style="padding:6px 8px; border:1px solid #DCE7E1; border-radius:6px; font-size:11px;">
+            <div style="display:flex; gap:6px;">
+                <input type="text" name="text" required placeholder="Написать сообщение..." style="flex:1; padding:7px 9px; border:1px solid #C6DDD0; border-radius:6px; font-size:12px; min-width:0;">
+                <button type="submit" aria-label="Отправить сообщение" style="background:#2E7D32; color:#fff; border:none; border-radius:6px; padding:0 12px; font-weight:700; cursor:pointer;">➤</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+    <button type="button" onclick="toggleChatBox()" aria-label="Чат" style="position:fixed !important; right:20px !important; bottom:20px !important; left:auto !important; top:auto !important; margin:0; padding:0; width:54px; height:54px; border-radius:50%; background:linear-gradient(135deg, #2E7D32 0%, #133829 100%); border:2px solid #A7F3D0; box-shadow:0 6px 20px rgba(14,43,32,0.35); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        {% set fab_cnt = admin_unread_chat if is_admin else (unread_chat or 0) %}
+        {% if fab_cnt > 0 %}<span style="position:absolute; top:-4px; right:-4px; background:#DC2626; color:#fff; font-size:12px; font-weight:800; min-width:20px; height:20px; padding:0 5px; border-radius:10px; display:flex; align-items:center; justify-content:center; border:2px solid #fff;">{{ fab_cnt }}</span>{% endif %}
+    </button>
+</div>
+<div id="zoom-modal" onclick="this.style.display='none'" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; padding:20px; cursor:zoom-out;">
+    <img id="zoom-img" src="" style="max-width:95vw; max-height:90vh; object-fit:contain; background:#fff; border-radius:10px; padding:10px;">
+</div>
 <script>
-let cart = JSON.parse(localStorage.getItem('mico_cart_final') || '[]').filter(x => x && x.name && x.price);
-function updCount() { document.getElementById('cart-count').innerText = cart.reduce((s, i) => s + (i.qty || 1), 0); }
-function addCart(name, price) {
-    let f = cart.find(x => x.name === name);
-    if (f) f.qty = (f.qty || 1) + 1; else cart.push({name, price, qty: 1, checked: true});
-    localStorage.setItem('mico_cart_final', JSON.stringify(cart));
-    updCount();
+function getCleanCart() {
+    try {
+        return JSON.parse(localStorage.getItem('mico_cart_final') || '[]')
+            .filter(x => x && typeof x.name === 'string' && x.name.trim().length > 0 && Number(x.price) > 0);
+    } catch (e) { return []; }
 }
-updCount();
+let cart = getCleanCart();
+function updCount() {
+    cart = getCleanCart();
+    let el = document.getElementById('cart-count');
+    if (el) el.innerText = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+}
+function addCart(id, name, price, qtyAdd = 1, maxStock = 99) {
+    cart = getCleanCart();
+    let lim = Math.max(1, Number(maxStock) || 1);
+    let f = cart.find(x => String(x.id) === String(id));
+    if (f) {
+        if (qtyAdd > 0 && f.qty >= lim) { alert('На складе доступно максимум ' + lim + ' шт.'); return; }
+        f.qty = (Number(f.qty) || 1) + qtyAdd;
+        if (f.qty <= 0) cart = cart.filter(x => String(x.id) !== String(id));
+        else { f.qty = Math.min(lim, f.qty); if (name) f.name = name; if (Number(price) > 0) f.price = Number(price); f.stock = lim; }
+    } else if (qtyAdd > 0 && name && Number(price) > 0) {
+        cart.push({id: Number(id), name: String(name), price: Number(price), qty: Math.min(lim, qtyAdd), stock: lim, checked: true});
+    }
+    localStorage.setItem('mico_cart_final', JSON.stringify(cart));
+    updCount(); syncCartBtns();
+}
+function addCartBtn(btn, qtyAdd = 1) { addCart(btn.dataset.pid, btn.dataset.pname, btn.dataset.pprice, qtyAdd, btn.dataset.pstock || 1); }
+function syncCartBtns() {
+    cart = getCleanCart();
+    document.querySelectorAll("[data-pid]").forEach(btn => {
+        let f = cart.find(x => String(x.id) === String(btn.dataset.pid));
+        let wrap = btn.parentElement;
+        let bar = wrap ? wrap.querySelector('.ozon-qty-bar') : null;
+        if (f && f.qty > 0) {
+            btn.style.display = 'none';
+            if (!bar) {
+                bar = document.createElement('div');
+                bar.className = 'ozon-qty-bar';
+                bar.style.cssText = 'display:flex; align-items:center; justify-content:space-between; background:#133829; color:#fff; border-radius:10px; padding:4px 8px; width:100%; font-weight:700;';
+                btn.insertAdjacentElement('afterend', bar);
+            }
+            bar.style.display = 'flex';
+            bar.innerHTML = `<button type="button" aria-label="Уменьшить количество на 1" onclick="addCart('${btn.dataset.pid}', '', 0, -1, ${btn.dataset.pstock || 1})" style="background:rgba(255,255,255,0.16); border:none; color:#fff; width:34px; height:34px; border-radius:7px; font-size:18px; font-weight:800; cursor:pointer;">−</button><a href="/cart" aria-label="В корзине ${f.qty} шт. Перейти в корзину" style="color:#fff; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; position:relative; padding:2px 8px;"><svg width="24" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1.2"/><circle cx="20" cy="21" r="1.2"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span style="position:absolute; top:-3px; left:15px; background:#FBBF24; color:#133829; font-size:11px; font-weight:900; min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 3px;">${f.qty}</span></a><button type="button" aria-label="Увеличить количество на 1" onclick="addCart('${btn.dataset.pid}', '', 0, 1, ${btn.dataset.pstock || 1})" style="background:rgba(255,255,255,0.16); border:none; color:#fff; width:34px; height:34px; border-radius:7px; font-size:18px; font-weight:800; cursor:pointer;">+</button>`;
+        } else {
+            btn.style.display = 'flex'; btn.style.width = '100%'; btn.style.justifyContent = 'center'; btn.style.alignItems = 'center';
+            if (bar) bar.style.display = 'none';
+        }
+    });
+}
+function toggleChatBox() { let b = document.getElementById('mico-chat-box'); if (b) b.style.display = (b.style.display === 'block') ? 'none' : 'block'; }
+function switchAdmChat(name) { document.querySelectorAll('.adm-chat-pane').forEach(el => { el.style.display = (el.dataset.cname === name) ? 'block' : 'none'; }); }
+function toggleFavBtn(btn) {
+    let id = btn.dataset.fid, favs = [];
+    try { favs = JSON.parse(localStorage.getItem('mico_favs') || '[]'); } catch(e) {}
+    let idx = favs.findIndex(x => String(x.id) === String(id));
+    if (idx !== -1) favs.splice(idx, 1);
+    else favs.push({id: Number(id), name: btn.dataset.fname || '', price: Number(btn.dataset.fprice || 0), img: btn.dataset.fimg || ''});
+    localStorage.setItem('mico_favs', JSON.stringify(favs));
+    syncFavs();
+}
+function syncFavs() {
+    let favs = [];
+    try { favs = JSON.parse(localStorage.getItem('mico_favs') || '[]'); } catch(e) {}
+    let fc = document.getElementById('fav-count'); if (fc) fc.innerText = favs.length;
+    let hfc = document.getElementById('hdr-fav-count'); if (hfc) hfc.innerText = favs.length;
+    document.querySelectorAll('.fav-heart').forEach(btn => {
+        let on = favs.some(x => String(x.id) === String(btn.dataset.fid));
+        btn.innerHTML = on
+            ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="#DC2626" stroke="#DC2626" stroke-width="2.1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+            : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+        btn.style.borderColor = on ? '#FCA5A5' : '#E5E7EB';
+    });
+}
+function openZoom(src) { document.getElementById('zoom-img').src = src; document.getElementById('zoom-modal').style.display = 'flex'; }
+if (new URLSearchParams(location.search).get('chat_open') === '1') { let b = document.getElementById('mico-chat-box'); if (b) b.style.display = 'block'; }
+document.addEventListener('DOMContentLoaded', () => { updCount(); syncCartBtns(); syncFavs(); });
+window.addEventListener('pageshow', () => { updCount(); syncCartBtns(); syncFavs(); });
+updCount(); syncCartBtns(); syncFavs();
 </script>
+<script src="/media/app.js?v=2"></script>
 </body>
 </html>

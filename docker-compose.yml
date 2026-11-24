@@ -1,22 +1,22 @@
 services:
-  web:
-    build: .
-    restart: unless-stopped
-    volumes:
-      - ./app:/app
-      - ./media:/app/media
-      - ./data:/app/data
-      - ./integrations.txt:/app/integrations.txt
-    expose:
-      - "8000"
-
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
       - "8888:443"
+      - "8889:80"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./media:/srv/media
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
     depends_on:
       - web
+  web:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ./app:/app
+      - ./data:/app/data
+      - ./media:/app/media
+      - ./integrations.txt:/app/integrations.txt:ro
+volumes:
+  caddy_data:

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:760px; margin:16px auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <h1 style="color:#133829; font-size:22px;">💬 Чат с производителем MICOVALD</h1>
+        <a href="/" style="color:#2E7D32; font-weight:700; text-decoration:none; font-size:13px;">← В каталог</a>
+    </div>
+    <div class="card" style="padding:16px; margin-bottom:14px; max-height:440px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; text-align:left; align-items:stretch;">
+        {% for m in messages %}
+        <div style="max-width:82%; padding:10px 14px; border-radius:12px; {{ 'align-self:flex-end; background:#E8F5E9; border:1px solid #C6DDD0;' if m.sender=='user' else 'align-self:flex-start; background:#F3F4F6; border:1px solid #E5E7EB;' }}">
+            <div style="font-size:11px; color:#6B7280; margin-bottom:4px; font-weight:700;">
+                {{ 'Вы' if m.sender=='user' else '🌿 Производитель MICOVALD' }} • {{ m.ts }}
+            </div>
+            {% if m.prod %}<div style="font-size:11px; color:#1D4ED8; font-weight:600; margin-bottom:4px;">Товар: {{ m.prod }}</div>{% endif %}
+            <div style="font-size:14px; color:#111827; white-space:pre-line;">{{ m.text }}</div>
+        </div>
+        {% else %}
+        <div style="text-align:center; color:#6B7280; padding:24px 10px; font-size:14px;">
+            Задайте любой вопрос о применении субстратов MICOVALD, оптовых поставках или доставке — производитель ответит вам прямо здесь, а уведомление появится на колокольчике 🔔 в шапке.
+        </div>
+        {% endfor %}
+    </div>
+    <form action="/chat/send" method="post" class="card" style="padding:14px; display:flex; flex-direction:column; gap:10px; text-align:left; align-items:stretch;">
+        {% if prod_q %}
+        <input type="hidden" name="prod_name" value="{{ prod_q }}">
+        <div style="font-size:12px; color:#1D4ED8; font-weight:700;">Вопрос по товару: {{ prod_q }}</div>
+        {% endif %}
+        <textarea name="text" rows="3" required placeholder="Напишите ваше сообщение производителю..." style="width:100%; padding:10px; border:1px solid #C6DDD0; border-radius:8px; font-size:14px;"></textarea>
+        <button type="submit" class="btn-cart" style="width:auto; align-self:flex-end; padding:10px 22px;">Отправить сообщение →</button>
+    </form>
+</div>
+{% endblock %}

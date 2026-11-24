@@ -27,8 +27,20 @@
         </div>
         <input type="hidden" name="total" id="ord-total" value="0">
         <input type="hidden" name="summary" id="ord-summary" value="">
+        <input type="hidden" name="cart_json" id="ord-cart-json" value="[]">
+                <div style="background:#F8FAF9; border:1px solid #C6DDD0; border-radius:8px; padding:10px 12px; margin-bottom:10px;">
+            <label style="font-size:13px; font-weight:700; color:#133829; display:block; margin-bottom:4px;">Способ доставки:</label>
+            <select name="delivery_type" id="ship-type" onchange="sync()" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; background:#fff; font-weight:600; color:#133829;">
+                <option value="pochta" selected>Почта России (350 ₽)</option>
+                <option value="cdek">СДЭК — пункт выдачи / курьер (400 ₽)</option>
+                <option value="pickup">Самовывоз — г. Санкт-Петербург (0 ₽, бесплатно)</option>
+            </select>
+            <div id="pickup-box" style="display:none; margin-top:8px; font-size:13px; color:#065F46; background:#ECFDF5; padding:8px 10px; border-radius:6px;">
+                <b>Пункт самовывоза MICOVALD:</b> г. Санкт-Петербург, ул. Тестовая, д. 1 (пн–пт с 10:00 до 19:00). Оплата на сайте или при получении.
+            </div>
+        </div>
         <div style="border-top:1px solid #D1DDD6; padding-top:10px;">
-            <div style="font-size:14px;">Товары: <b id="cart-raw">0</b> ₽ + Доставка: <b>350 ₽</b></div>
+            <div style="font-size:14px;">Товары: <b id="cart-raw">0</b> ₽ + Доставка: <b id="ship-cost">350 ₽</b></div>
             <div id="disc-line" style="font-size:13px; color:#2E7D32; font-weight:600; margin:4px 0;"></div>
             <div style="font-size:19px; font-weight:800; color:#133829; margin:6px 0 10px;">Итого: <span id="cart-sum">0</span> ₽</div>
             <button type="submit" class="btn-cart" style="background:#7C3AED;">💳 Оплатить через ЮMoney / ЮKassa</button>
@@ -99,17 +111,24 @@ function sync() {
     let sel = items.filter(i => i.checked);
     let raw = sel.reduce((s, i) => s + i.price * i.qty, 0);
     let disc = IS_AUTH ? Math.round(raw * 0.05) : 0;
-    let total = raw > 0 ? (raw - disc + 350) : 0;
+    let st = document.getElementById('ship-type')?.value || 'pochta';
+    let sc = st === 'pickup' ? 0 : (st === 'cdek' ? 400 : 350);
+    if (document.getElementById('ship-cost')) document.getElementById('ship-cost').innerText = sc + ' ₽';
+    if (document.getElementById('pickup-box')) document.getElementById('pickup-box').style.display = (st === 'pickup') ? 'block' : 'none';
+    let zipEl = document.getElementById('zip-in'), addrEl = document.getElementById('addr-in');
+    if (zipEl && addrEl && st === 'pickup') { zipEl.value = '190000'; addrEl.value = 'г. Санкт-Петербург, Самовывоз со склада MICOVALD, д. 1'; }
+    let total = raw > 0 ? (raw - disc + sc) : 0;
     document.getElementById('cart-raw').innerText = raw;
     document.getElementById('disc-line').innerHTML = IS_AUTH ? `Скидка 5% (зарегистрированный пользователь): −${disc} ₽` : `<a href="/login" style="color:#2E7D32;">Войдите или зарегистрируйтесь</a> для скидки 5%`;
     document.getElementById('cart-sum').innerText = total;
     document.getElementById('ord-total').value = total;
     document.getElementById('ord-summary').value = sel.map(i => `${i.name} (${i.qty} шт.)`).join(', ');
+    if (document.getElementById('ord-cart-json')) document.getElementById('ord-cart-json').value = JSON.stringify(sel);
     document.getElementById('cart-list').innerHTML = items.length ? items.map((i, idx) => `<div style="padding:10px 0; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between; gap:10px;"><label style="display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;"><input type="checkbox" ${i.checked?'checked':''} onchange="items[${idx}].checked=this.checked;sync()"><span>${i.name}</span></label><div style="display:flex; align-items:center; gap:6px;"><button type="button" onclick="chQty(${idx},-1)" style="padding:2px 8px;">-</button><b>${i.qty}</b><button type="button" onclick="chQty(${idx},1)" style="padding:2px 8px;">+</button></div><b>${i.price * i.qty} ₽</b><button type="button" onclick="items.splice(${idx},1);sync()" style="background:none;border:none;cursor:pointer;font-size:15px;">🗑️</button></div>`).join('') : 'Корзина пуста. <a href="/">В каталог</a>';
 }
 function toggleAll(st) { items.forEach(i => i.checked = st); sync(); }
 function delSelected() { items = items.filter(i => !i.checked); sync(); }
-function chQty(idx, d) { items[idx].qty += d; if (items[idx].qty <= 0) items.splice(idx, 1); sync(); }
+function chQty(idx, d) { let lim = items[idx].stock || 1; if (d > 0 && items[idx].qty >= lim) { alert("На складе доступно максимум " + lim + " шт."); return; } items[idx].qty += d; if (items[idx].qty <= 0) items.splice(idx, 1); sync(); }
 function prepOrder() {
     if (!items.some(i => i.checked)) { alert('Выберите хотя бы один товар!'); return false; }
     if (!checkAll()) return false;
@@ -118,5 +137,6 @@ function prepOrder() {
     return true;
 }
 sync();
+window.addEventListener("pageshow", function(){ items = JSON.parse(localStorage.getItem("mico_cart_final") || "[]").filter(x => x && x.name && x.price); sync(); });
 </script>
 {% endblock %}

@@ -422,3 +422,10 @@ async def owner_promo_save(request: Request, pid: int = Form(0), title: str = Fo
 async def owner_promo_arch(request: Request, pid: int):
     if is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))): archive_promo(pid)
     return RedirectResponse("/owner?msg=1", 303)
+
+@app.get("/promos", response_class=HTMLResponse)
+async def promos_page(request: Request):
+    from datetime import datetime
+    today = datetime.now().strftime("%Y-%m-%d")
+    act = [p for p in get_promos() if p.get("active") and p.get("start_date", "") <= today <= p.get("end_date", "9999-12-31")]
+    return templates.TemplateResponse(request, "promos.html", ctx(request, active_promos=act))

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:820px; margin:20px auto;">
+    <h1 style="color:#133829; margin-bottom:14px;">🎁 Действующие акции и специальные предложения</h1>
+    {% if active_promos %}
+    <div style="display:flex; flex-direction:column; gap:14px;">
+        {% for p in active_promos %}
+        <div class="card" style="border-left:5px solid #DC2626; background:linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 100%); padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                <span style="background:#DC2626; color:#fff; font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px;">СКИДКА −{{ p.discount }}%</span>
+                <span style="font-size:13px; color:#6B7280; font-weight:600;">Действует с {{ p.start_date }} по {{ p.end_date }}</span>
+            </div>
+            <h2 style="color:#133829; font-size:20px; margin-bottom:8px;">{{ p.title }}</h2>
+            <p style="font-size:14px; color:#374151; line-height:1.6; margin-bottom:14px;">{{ p.desc }}</p>
+            <a href="/" class="btn-cart" style="display:inline-block; width:auto; text-decoration:none; padding:10px 20px; background:#DC2626;">Перейти в каталог со скидкой −{{ p.discount }}% →</a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="padding:24px; text-align:center;">
+        <p style="font-size:15px; color:#374151; margin-bottom:12px;">Сейчас специальных временных акций нет, но для всех зарегистрированных покупателей действует постоянная <b>скидка 5%</b> в корзине!</p>
+        <a href="/" class="btn-cart" style="display:inline-block; width:auto; text-decoration:none; padding:10px 20px;">Перейти в каталог →</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

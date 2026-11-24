@@ -27,6 +27,11 @@ def run_tests():
     tf.unlink(missing_ok=True)
     for secret_path in ["/data/finance.json", "/data/users.json", "/owner/export.csv", "/integrations.txt"]:
         assert client.get(secret_path, follow_redirects=False).status_code in (303, 403, 404), f"Утечка {secret_path}!"
+    assert client.get("/promos").status_code == 200, "Ошибка страницы /promos"
+    assert client.get("/data/promos.json", follow_redirects=False).status_code in (303, 403, 404), "Утечка promos.json!"
+    from promos import save_promo, get_active_promo, archive_promo
+    save_promo(0, "Тест акция", "Условия теста", 15, "2020-01-01", "2020-01-02")
+    assert get_active_promo() is None, "Просроченная акция не ушла в архив!"
     print("✅ ВСЕ АВТОТЕСТЫ (ВСЕ СТРАНИЦЫ, МЕНЮ БЕЗ ДУБЛЕЙ, БЕЗОПАСНОСТЬ, ФИЛЬТР) ПРОЙДЕНЫ!")
 
 if __name__ == "__main__":

@@ -1,14 +1,13 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -e
-cd "$(dirname "$0")"
-
-mkdir -p data media/products media/about
-[ -f integrations.txt ] || printf "YOOKASSA_SHOP_ID=\nYOOKASSA_SECRET_KEY=\nPOCHTA_WIDGET_ID=\nPOCHTA_API_TOKEN=\nVK_SERVICE_TOKEN=\nVK_GROUP_DOMAIN=\n" > integrations.txt
-
-docker compose up -d
-sleep 2
-docker compose exec -T web python3 -c "from security import load_users; load_users()" >/dev/null 2>&1 || true
+docker compose up -d --build
+if [ ! -f /usr/local/share/ca-certificates/caddy-local.crt ] && grep -q "localhost" Caddyfile; then
+    docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt /tmp/caddy-local.crt 2>/dev/null || true
+    if [ -f /tmp/caddy-local.crt ]; then
+        sudo mv /tmp/caddy-local.crt /usr/local/share/ca-certificates/caddy-local.crt && sudo update-ca-certificates >/dev/null 2>&1 || true
+        sudo mkdir -p /etc/firefox/policies && echo '{"policies":{"Certificates":{"ImportEnterpriseRoots":true}}}' | sudo tee /etc/firefox/policies/policies.json >/dev/null 2>&1 || true
+    fi
+fi
 docker compose exec -T web python3 /app/test_site.py
-
-echo "=== Сайт MICOVALD запущен: http://localhost:8888 ==="
+echo "=== Сайт MICOVALD запущен: https://localhost:8888 ==="
 docker compose ps

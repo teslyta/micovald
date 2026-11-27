@@ -33,12 +33,12 @@
 
         <div class="nav-links">
             {% if user %}
-                <a href="/chat" class="amz-acc" style="align-items:flex-start; text-align:left;" title="Уведомления и чат с производителем" aria-label="Уведомления и чат с производителем" style="position:relative; display:inline-flex; flex-direction:row; align-items:center; gap:5px;">
+                <a href="/chat" class="amz-acc" style="display:flex !important; flex-direction:column !important; align-items:flex-start !important; text-align:left !important; justify-content:center;" title="Уведомления и чат с производителем" aria-label="Уведомления и чат с производителем" style="position:relative; display:inline-flex; flex-direction:row; align-items:center; gap:5px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                     {% if unread_chat and unread_chat > 0 %}<span style="background:#DC2626; color:#fff; font-size:11px; font-weight:800; padding:1px 5px; border-radius:10px;">{{ unread_chat }}</span>{% endif %}
                 </a>
                 <div class="amz-drop-wrap">
-                    <a href="/account" class="amz-acc" style="align-items:flex-start; text-align:left;" aria-label="Личный кабинет пользователя {{ user }}">
+                    <a href="/account" class="amz-acc" style="display:flex !important; flex-direction:column !important; align-items:flex-start !important; text-align:left !important; justify-content:center;" aria-label="Личный кабинет пользователя {{ user }}">
                         <span style="font-size:11px; color:#A7F3D0; font-weight:400;">Здравствуйте, {{ user }}</span>
                         <span>Аккаунт и заказы ▾</span>
                     </a>
@@ -60,7 +60,7 @@
                     </div>
                 </div>
             {% else %}
-                <a href="/login" class="amz-acc" style="align-items:flex-start; text-align:left;" aria-label="Войти или зарегистрироваться со скидкой 5%">
+                <a href="/login" class="amz-acc" style="display:flex !important; flex-direction:column !important; align-items:flex-start !important; text-align:left !important; justify-content:center;" aria-label="Войти или зарегистрироваться со скидкой 5%">
                     <span style="font-size:11px; color:#A7F3D0; font-weight:400;">Здравствуйте, Войти</span>
                     <span>Аккаунт и заказы</span>
                 </a>
@@ -313,6 +313,6 @@ document.addEventListener('DOMContentLoaded', () => { updCount(); syncCartBtns()
 window.addEventListener('pageshow', () => { updCount(); syncCartBtns(); syncFavs(); });
 updCount(); syncCartBtns(); syncFavs();
 </script>
-<script src="/media/app.js?v=29"></script>
+<script src="/media/app.js?v=30"></script>
 </body>
 </html>

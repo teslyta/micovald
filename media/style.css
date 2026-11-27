@@ -96,3 +96,12 @@ header { background: linear-gradient(135deg, #0E2B20 0%, #184734 100%); color: #
 /* left-acc-fix */
 .amz-acc, .amz-acc * { text-align: left !important; }
 .amz-acc { align-items: flex-start !important; justify-content: center !important; }
+
+.nav-links a { white-space: nowrap !important; display: inline-flex; align-items: center; gap: 4px; }
+.amz-acc { display: flex !important; flex-direction: column !important; align-items: flex-start !important; text-align: left !important; }
+.amz-acc span { display: block !important; text-align: left !important; width: 100% !important; }
+@media (max-width: 639px) {
+    .nav-links { gap: 2px !important; }
+    .nav-links a { padding: 4px 5px !important; font-size: 12px !important; }
+    .amz-acc { padding: 3px 5px !important; }
+}

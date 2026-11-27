@@ -65,7 +65,7 @@
                     <span>Аккаунт и заказы</span>
                 </a>
             {% endif %}
-            <a href="/favorites" class="amz-acc" style="align-items:flex-start; text-align:left;" title="Избранные товары" aria-label="Избранные товары" style="position:relative; display:inline-flex; flex-direction:row; align-items:center; gap:4px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span id="hdr-fav-count" style="font-size:12px; font-weight:800; color:#FBBF24;">0</span></a>
+            <a href="/favorites" class="amz-fav-link" title="Избранные товары" aria-label="Избранные товары" style="display:inline-flex !important; flex-direction:row !important; align-items:center !important; gap:5px; padding:6px 8px; border-radius:8px; white-space:nowrap;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span id="hdr-fav-count" style="font-size:12px; font-weight:800; color:#FBBF24;">0</span></a>
             <a href="/cart" class="amz-cart" aria-label="Корзина покупок">
                 <div class="amz-cart-icon">
                     <span id="cart-count" class="amz-cart-num" aria-live="polite">0</span>
@@ -313,6 +313,6 @@ document.addEventListener('DOMContentLoaded', () => { updCount(); syncCartBtns()
 window.addEventListener('pageshow', () => { updCount(); syncCartBtns(); syncFavs(); });
 updCount(); syncCartBtns(); syncFavs();
 </script>
-<script src="/media/app.js?v=27"></script>
+<script src="/media/app.js?v=29"></script>
 </body>
 </html>

@@ -383,7 +383,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         let sp = new URLSearchParams(location.search);
         if (sp.get('demo_showcase') === '1') {
-            let f1 = document.querySelector('.fav-heart')?.dataset.fid || '1'; localStorage.setItem('mico_favs', JSON.stringify([String(f1)]));
+            localStorage.removeItem('mico_favs');
+            let fBtn = document.querySelector('.fav-heart');
+            if (fBtn && typeof window.toggleFav === 'function') {
+                window.toggleFav(fBtn.dataset.fid, fBtn.dataset.fname, fBtn.dataset.fprice, fBtn.dataset.fimg);
+            }
             localStorage.setItem('mico_cart_final', JSON.stringify([
                 {id:'2', name:'Миковальд, набор №3 К и Т', price:2134, qty:2, stock:10, checked:true}
             ]));

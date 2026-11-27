@@ -624,7 +624,7 @@ async def api_suggest_addr(q: str = "", zip_code: str = ""):
                     if nums:
                         h_num = nums[0]
                         out.append({"addr": f"{city_lbl}, {st}, д. {h_num}", "zip": z})
-                        for suf in ["к. 1", "к. 2", "стр. 1", "литера А"]:
+                        for suf in ["кв. 1", "кв. 10", "кв. 25", "к. 1, кв. 1", "стр. 1"]:
                             out.append({"addr": f"{city_lbl}, {st}, д. {h_num}, {suf}", "zip": z})
                     elif street_tokens:
                         for h in ["1", "2", "5", "10", "15", "25"]:

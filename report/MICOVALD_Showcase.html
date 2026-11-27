@@ -19,7 +19,45 @@ body { font-family: "DejaVu Sans", Arial, sans-serif; color: #1A2421; font-size:
 .bullets li { margin-bottom: 5px; }
 .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .pill { background: #E8F5E9; color: #133829; font-weight: bold; font-size: 8.3pt; padding: 4px 10px; border-radius: 14px; border: 1px solid #B7DEC2; }
+
+.title-page {
+    height: 266mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(155deg, #0E2B20 0%, #184734 55%, #236347 100%);
+    color: #FFFFFF;
+    padding: 28mm 22mm;
+    border-radius: 12px;
+    box-sizing: border-box;
+    page-break-after: always;
+}
+.tp-tag { display: inline-block; background: rgba(167,243,208,0.16); border: 1px solid #6EE7B7; color: #A7F3D0; padding: 5px 14px; border-radius: 20px; font-size: 9.5pt; font-weight: bold; margin-bottom: 18px; }
+.tp-title { font-size: 24pt; font-weight: bold; line-height: 1.25; margin: 0 0 14px; }
+.tp-sub { font-size: 11.5pt; color: #D1FAE5; line-height: 1.5; margin: 0 0 26px; }
+.tp-box { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 18px 20px; font-size: 10pt; line-height: 1.65; }
+.tp-box b { color: #A7F3D0; }
+.tp-footer { text-align: center; font-size: 10.5pt; color: #A7F3D0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 14px; }
+
 </style></head><body>
+
+<div class="title-page">
+    <div>
+        <div class="tp-tag">ПОРТФОЛИО-ПРОЕКТ • FULL-STACK E-COMMERCE & CRM</div>
+        <h1 class="tp-title">🌿 MICOVALD — Веб-платформа интернет-магазина и управления продажами</h1>
+        <p class="tp-sub">Полнофункциональный коммерческий сервис для производителя почвенных биосубстратов: умный поиск, складской учёт, онлайн-чат, налоговая отчётность КУДиР и юридический фильтр по 109-ФЗ.</p>
+        <div class="tp-box">
+            <div><b>Автор проекта и архитектор:</b> Мария</div>
+            <div><b>AI-соавтор разработки:</b> Google AI (Gemini)</div>
+            <div style="margin-top:10px;"><b>Технологический стек:</b><br>
+            • <b>Backend:</b> Python 3, FastAPI, Uvicorn, Jinja2<br>
+            • <b>Frontend:</b> HTML5, CSS3 (Adaptive Grid/Flexbox, WCAG/ARIA), Vanilla JS (ES6+)<br>
+            • <b>Инфраструктура и безопасность:</b> Docker, Docker Compose, Caddy (HTTPS/TLS), CSP, 2FA (Email/SMS), Anti-Scraping защита, Automated E2E Testing</div>
+        </div>
+    </div>
+    <div class="tp-footer">Санкт-Петербург • 2026</div>
+</div>
+
 
 <div class="cover">
     <h1>🌿 MICOVALD — Современная e-commerce платформа полного цикла</h1>

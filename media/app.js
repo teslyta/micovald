@@ -367,4 +367,16 @@
     document.addEventListener('DOMContentLoaded', applySavedShipPref);
     window.addEventListener('pageshow', applySavedShipPref);
 
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let sp = new URLSearchParams(location.search);
+        let dz = sp.get('demo_zip'), da = sp.get('demo_addr');
+        let zIn = document.getElementById('zip-in'), aIn = document.getElementById('addr-in');
+        if (dz && zIn && aIn) {
+            zIn.value = dz; zIn.dataset.lastZip = dz; aIn.dataset.zipOwner = dz;
+            if (da) { aIn.value = da; loadAddrSuggestions(da, dz); }
+            else { loadAddrSuggestions('', dz); }
+        }
+    });
+
 })();

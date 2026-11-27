@@ -92,3 +92,7 @@ header { background: linear-gradient(135deg, #0E2B20 0%, #184734 100%); color: #
 }
 
 .amz-acc { align-items: flex-start !important; text-align: left !important; }
+
+/* left-acc-fix */
+.amz-acc, .amz-acc * { text-align: left !important; }
+.amz-acc { align-items: flex-start !important; justify-content: center !important; }

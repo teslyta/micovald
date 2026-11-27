@@ -383,15 +383,13 @@
     document.addEventListener('DOMContentLoaded', function() {
         let sp = new URLSearchParams(location.search);
         if (sp.get('demo_showcase') === '1') {
-            let favBtns = document.querySelectorAll('.fav-heart');
-            if (favBtns.length > 0 && !JSON.parse(localStorage.getItem('mico_favs') || '[]').length) {
-                window.toggleFavBtn(favBtns);
-            }
-            let cartBtns = document.querySelectorAll('.btn-cart[data-pid]');
-            let targetBtn = cartBtns.length > 1 ? cartBtns : cartBtns;
-            if (targetBtn && !getCleanCart().length) {
-                window.addCartBtn(targetBtn, 2);
-            }
+            localStorage.setItem('mico_favs', JSON.stringify(['1']));
+            localStorage.setItem('mico_cart_final', JSON.stringify([
+                {id:'2', name:'Миковальд, набор №3 К и Т', price:2134, qty:2, stock:10, checked:true}
+            ]));
+            window.updCount(); window.syncCartBtns(); window.syncFavs();
+            if (typeof sync === 'function') sync();
+            if (typeof window.syncCartPage === 'function') window.syncCartPage();
         }
         if (sp.get('demo_chat') === '1') {
             let cw = document.getElementById('chat-win');

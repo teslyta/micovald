@@ -387,7 +387,7 @@
             if (favBtns && !JSON.parse(localStorage.getItem('mico_favs') || '[]').length) {
                 window.toggleFavBtn(favBtns);
             }
-            let cartBtns = document.querySelectorAll('[data-pid]');
+            let cartBtns = document.querySelectorAll('.btn-cart[data-pid]');
             let targetBtn = cartBtns || cartBtns;
             if (targetBtn && !getCleanCart().length) {
                 window.addCartBtn(targetBtn, 2);

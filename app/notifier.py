@@ -20,8 +20,8 @@ def send_email(to_email: str, subject: str, body: str):
         try:
             msg = EmailMessage()
             msg["Subject"], msg["From"], msg["To"] = subject, user, to_email
-            msg["Date"], msg["Message-ID"] = formatdate(localtime=True), make_msgid(domain="yandex.ru")
-            msg.set_content(body + '\n\n--\nС уважением, MICOVALD\nРешения для фермеров и сельхозпредприятий\nИндивидуальный подбор почвенных субстратов MICOVALD под ваши культуры, оптовые партии, консультации микробиолога и сопроводительная документация.\nСайт: https://micovald.ru | Почта: micovald@yandex.ru')
+            msg["Date"], msg["Message-ID"] = formatdate(localtime=True), make_msgid(domain="example.com")
+            msg.set_content(body + '\n\n--\nС уважением, MICOVALD\nРешения для фермеров и сельхозпредприятий\nИндивидуальный подбор почвенных субстратов MICOVALD под ваши культуры, оптовые партии, консультации микробиолога и сопроводительная документация.\nСайт: https://micovald.ru | Почта: contact@example.com')
             with smtplib.SMTP_SSL(host, int(cfg.get("SMTP_PORT") or 465), context=ssl.create_default_context(), timeout=5) as s:
                 s.login(user, pw); s.send_message(msg)
         except Exception as e:

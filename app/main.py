@@ -507,7 +507,7 @@ async def chat_send(request: Request, text: str = Form(...), prod_name: str = Fo
     add_chat_msg(actor, "user", text, prod_name)
     try:
         from notifier import send_email, get_cfg
-        to_m = get_cfg().get("SMTP_USER", "").strip() or "micovald@yandex.ru"
+        to_m = get_cfg().get("SMTP_USER", "").strip() or "contact@example.com"
         send_email(to_m, f"Чат: {label}", f"Покупатель {label} написал в чат:\n{text}\nТовар: {prod_name or 'Общий вопрос'}")
     except Exception: pass
     ref = (request.headers.get("referer") or "/").split("#")[0]
@@ -549,7 +549,7 @@ async def api_suggest_addr(q: str = "", zip_code: str = ""):
     try: zcache = json.loads(cache_file.read_text(encoding="utf-8")) if cache_file.exists() else {}
     except Exception: zcache = {}
 
-    ua = {"User-Agent": "MICOVALD-Shop/1.0 (micovald@yandex.ru)"}
+    ua = {"User-Agent": "MICOVALD-Shop/1.0 (contact@example.com)"}
 
     # 1. Пробуем определить город и улицы по 6-значному индексу через OpenStreetMap (с валидным User-Agent)
     if len(z) == 6 and z not in zcache:

@@ -6,6 +6,9 @@ from store import check_stop_words
 client = TestClient(app)
 
 def run_tests():
+    import pathlib
+    pf = pathlib.Path('/app/data/promos.json')
+    promos_backup = pf.read_text(encoding='utf-8') if pf.exists() else None
     for path in ["/", "/category/substrates", "/cart", "/encyclopedia", "/about", "/farmers", "/how-to-order", "/login", "/register"]:
         r = client.get(path)
         assert r.status_code == 200, f"Ошибка 404/500 на {path}"
@@ -42,6 +45,7 @@ def run_tests():
     p0 = get_products()
     assert client.get(f"/product/{next(iter(p0))['id']}").status_code == 200, "Ошибка карточки товара!"
     assert client.get("/chat").status_code == 200, "Чат должен быть доступен без авторизации!"
+    if promos_backup is not None: pf.write_text(promos_backup, encoding="utf-8")
     print("✅ ВСЕ АВТОТЕСТЫ (ВСЕ СТРАНИЦЫ, МЕНЮ БЕЗ ДУБЛЕЙ, БЕЗОПАСНОСТЬ, ФИЛЬТР) ПРОЙДЕНЫ!")
 
 if __name__ == "__main__":

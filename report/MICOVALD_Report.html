@@ -1,119 +1,35 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<style>
-@page { size: A4; margin: 13mm 12mm; }
-body { font-family: "DejaVu Sans", Arial, sans-serif; color: #1A2421; font-size: 9.4pt; line-height: 1.45; margin: 0; }
-.hero { background: linear-gradient(135deg, #0E2B20 0%, #1B4D38 100%); color: #FFFFFF; padding: 18px 22px; border-radius: 10px; margin-bottom: 14px; }
-.hero h1 { margin: 0 0 6px 0; font-size: 16.5pt; }
-.hero p { margin: 0; color: #A7F3D0; font-size: 9.3pt; }
-h2 { color: #133829; font-size: 12.5pt; border-bottom: 2px solid #2E7D32; padding-bottom: 3px; margin-top: 15px; page-break-after: avoid; }
-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 8.5pt; }
-th { background: #133829; color: #FFFFFF; padding: 6px 8px; text-align: left; }
-td { border: 1px solid #C6DDD0; padding: 6px 8px; vertical-align: top; }
-tr:nth-child(even) { background: #F4F9F6; }
-.grid-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
-.shot-card { border: 1px solid #C6DDD0; border-radius: 8px; padding: 7px; background: #FAFDFB; text-align: center; }
-.shot-card img { width: 100%; height: 155px; object-fit: contain; border-radius: 5px; border: 1px solid #E5E7EB; background: #fff; }
-.shot-card div { font-size: 8.3pt; font-weight: bold; color: #133829; margin-top: 4px; }
-.warn-box { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 9px 12px; border-radius: 6px; margin: 8px 0; font-size: 8.9pt; }
-.ok-box { background: #F3F8F5; border-left: 4px solid #2E7D32; padding: 9px 12px; border-radius: 6px; margin: 8px 0; font-size: 8.9pt; }
-a { color: #1D4ED8; text-decoration: underline; }
-</style>
-</head>
-<body>
-
-<div class="hero">
-    <h1>🌿 Технико-экономический и презентационный отчёт: Платформа MICOVALD</h1>
-    <p>Архитектура e-commerce, мировые UX/UI-стандарты, финансовое сравнение с WordPress, маркетинг и защита по 109-ФЗ</p>
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><style>
+@page { size: A4; margin: 13mm 12mm; } body { font-family: "DejaVu Sans", Arial, sans-serif; color: #1A2421; font-size: 9pt; line-height: 1.42; }
+.hero { background: #133829; color: #fff; padding: 14px 18px; border-radius: 10px; margin-bottom: 10px; }
+.hero h1 { margin: 0 0 4px; font-size: 15pt; } .hero p { margin: 0; color: #A7F3D0; font-size: 8.8pt; }
+h2 { color: #133829; font-size: 11.5pt; border-bottom: 2px solid #2E7D32; padding-bottom: 2px; margin-top: 12px; }
+.row { display: flex; gap: 8px; margin: 6px 0; } .shot { flex: 1; border: 1px solid #C6DDD0; border-radius: 6px; padding: 5px; text-align: center; background: #FAFDFB; }
+.shot img { width: 100%; height: 145px; object-fit: contain; } .shot div { font-size: 8pt; font-weight: bold; margin-top: 3px; }
+table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 8.2pt; } th { background: #133829; color: #fff; padding: 5px 7px; text-align: left; }
+td { border: 1px solid #C6DDD0; padding: 5px 7px; } tr:nth-child(even) { background: #F4F9F6; }
+.box { background: #F3F8F5; border-left: 4px solid #2E7D32; padding: 7px 10px; border-radius: 5px; margin-top: 8px; font-size: 8.5pt; }
+</style></head><body>
+<div class="hero"><h1>🌿 Итоговый отчёт по платформе MICOVALD</h1><p>Архитектура, UX/UI-решения, скриншоты ПК и мобильной версии, финансовое сравнение с WordPress и инструкция переноса</p></div>
+<h2>1. Скриншоты интерфейса (ПК -> Мобильная версия)</h2>
+<div class="row">
+  <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/pc_home.png"><div>ПК: Главная витрина и поиск</div></div>
+  <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/pc_product.png"><div>ПК: Карточка товара и остатки</div></div>
+  <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/pc_cart.png"><div>ПК: Корзина и расчёт акций</div></div>
 </div>
-
-<h2>1. Визуальная демонстрация разработанной платформы (ПК, планшет, смартфон)</h2>
-<div class="grid-2x2">
-    <div class="shot-card">
-        <img src="file:///home/maria/mikovald/report/shot_home.png" alt="Десктопная витрина">
-        <div>1. Главная витрина ПК: составной поиск и выпадающее меню (стандарт Amazon)</div>
-    </div>
-    <div class="shot-card">
-        <img src="file:///home/maria/mikovald/report/shot_prod.png" alt="Карточка товара">
-        <div>2. Карточка товара: галерея, остатки, доставка и чат (стандарт eBay / Ozon)</div>
-    </div>
-    <div class="shot-card">
-        <img src="file:///home/maria/mikovald/report/shot_tab.png" alt="Планшетная версия">
-        <div>3. Версия для планшета: сетка 3 товара в ряд сразу под верхним меню</div>
-    </div>
-    <div class="shot-card">
-        <img src="file:///home/maria/mikovald/report/shot_mob.png" alt="Мобильная версия">
-        <div>4. Версия для смартфона: 2 товара в ряд, избранное и онлайн-чат справа внизу</div>
-    </div>
+<div class="row">
+  <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/mob_home.png"><div>Смартфон: Каталог 2 в ряд и чат</div></div>
+  <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/mob_product.png"><div>Смартфон: Карточка товара и доставка</div></div>
 </div>
-
-<h2>2. Финансовый расчёт: стоимость аналогичного функционала на WordPress vs платформа MICOVALD</h2>
-<p>Текущий сайт <b>micovald.ru</b> создан на CMS WordPress как статичная витрина без корзины, расчёта доставки, складского учёта, личного кабинета, онлайн-чата и налоговой отчётности. Реализация сопоставимого по возможностям и безопасности решения на <b>WordPress + WooCommerce</b> требует закупки платных плагинов и заказной PHP-разработки:</p>
-
+<h2>2. Финансовое сравнение: WordPress + WooCommerce vs платформа MICOVALD</h2>
 <table>
-    <tr>
-        <th style="width:27%;">Функциональный модуль</th>
-        <th style="width:37%;">Стоимость реализации на WordPress + WooCommerce (рынок РФ)</th>
-        <th style="width:36%;">Новая платформа MICOVALD (Python FastAPI + Docker)</th>
-    </tr>
-    <tr>
-        <td><b>Интернет-магазин, корзина, контроль остатков и автосписание</b></td>
-        <td>Настройка WooCommerce + доработка карточки под eBay/Ozon: <b>35 000 – 55 000 ₽</b></td>
-        <td>Встроено в ядро: контроль складских остатков, запрет заказа сверх остатка и автосписание</td>
-    </tr>
-    <tr>
-        <td><b>Доставка (Почта РФ, СДЭК, Самовывоз) и автоподсказка адресов</b></td>
-        <td>Плагины СДЭК/Почта России + подписка DaData/КЛАДР: <b>25 000 – 40 000 ₽</b> + от <b>12 000 ₽/год</b></td>
-        <td>Встроено без абонентской платы, с мгновенным пересчётом доставки при оформлении</td>
-    </tr>
-    <tr>
-        <td><b>Юридический фильтр стоп-слов по 109-ФЗ</b></td>
-        <td>Готовых решений нет; индивидуальная разработка на PHP: <b>30 000 – 45 000 ₽</b></td>
-        <td>Встроенный автоматический фильтр 109-ФЗ при публикации товаров и лекций</td>
-    </tr>
-    <tr>
-        <td><b>Налоговый учёт КУДиР (ФНС), возвраты и аналитика упущенного спроса</b></td>
-        <td>Платные модули бухгалтерии и поисковой аналитики: <b>35 000 – 60 000 ₽</b> + подписки</td>
-        <td>Встроено: экспорт КУДиР для ФНС (CSV с датой), учёт доходов/расходов и отчёт спроса</td>
-    </tr>
-    <tr>
-        <td><b>Двухфакторная защита (2FA Email/SMS), антибот и откат действий (Undo)</b></td>
-        <td>Wordfence Pro + 2FA + SMS-шлюз: <b>25 000 – 40 000 ₽</b> + <b>10 000 ₽/год</b></td>
-        <td>Встроено на уровне сервера: 2FA, защита от перебора паролей, CSRF и кнопка Undo</td>
-    </tr>
-    <tr>
-        <td><b>Онлайн-чат без регистрации, email-уведомления и автоочистка (24 ч)</b></td>
-        <td>Коммерческие онлайн-чаты (Jivo / Carrot quest): <b>18 000 – 36 000 ₽/год</b> постоянно</td>
-        <td>Собственный встроенный чат без абонентской платы с уведомлениями владельцу на почту</td>
-    </tr>
-    <tr>
-        <td><b>Доступность для незрячих (WCAG / ARIA) и UX по стандартам <a href="https://amazon.com">Amazon</a> / <a href="https://ebay.com">eBay</a> / <a href="https://ozon.ru">Ozon</a> / <a href="https://iherb.com">iHerb</a></b></td>
-        <td>Индивидуальная адаптивная вёрстка и аудит доступности: <b>30 000 – 50 000 ₽</b></td>
-        <td>Реализовано в базовой архитектуре шаблонов, CSS и ARIA-разметке для скринридеров</td>
-    </tr>
-    <tr>
-        <td><b>ИТОГО ЗАТРАТЫ И ВЛАДЕНИЕ:</b></td>
-        <td><b>198 000 – 326 000 ₽</b> на разработку + <b>40 000 – 60 000 ₽/год</b> ежегодно за плагины</td>
-        <td><b>0 ₽</b> ежегодных подписок на плагины и виджеты; полная автономность системы</td>
-    </tr>
+  <tr><th>Модуль</th><th>WordPress + WooCommerce (РФ)</th><th>Платформа MICOVALD</th></tr>
+  <tr><td>Магазин, корзина, складские остатки и автосписание</td><td>35 000 – 55 000 ₽</td><td>Встроено в ядро</td></tr>
+  <tr><td>Доставка (Почта РФ, СДЭК, Самовывоз) и автоподсказки</td><td>25 000 – 40 000 ₽ + 12 000 ₽/год</td><td>Встроено (0 ₽/год)</td></tr>
+  <tr><td>Юридический фильтр стоп-слов по 109-ФЗ</td><td>30 000 – 45 000 ₽</td><td>Встроенный фильтр 109-ФЗ</td></tr>
+  <tr><td>Налоговый учёт КУДиР ФНС и аналитика спроса</td><td>35 000 – 60 000 ₽ + подписки</td><td>Встроено (CSV с датой)</td></tr>
+  <tr><td>Защита 2FA (Email/SMS), антибот и откат (Undo)</td><td>25 000 – 40 000 ₽ + 10 000 ₽/год</td><td>Встроено на уровне сервера</td></tr>
+  <tr><td>Онлайн-чат без регистрации и уведомления</td><td>18 000 – 36 000 ₽/год постоянно</td><td>Собственный чат (0 ₽/год)</td></tr>
+  <tr><td><b>ИТОГО ЗАТРАТЫ:</b></td><td><b>198 000 – 326 000 ₽</b> + <b>40 000 – 60 000 ₽/год</b></td><td><b>0 ₽</b> абонентской платы</td></tr>
 </table>
-
-<h2>3. Маркетинг, безопасность и защита от репутационных потерь</h2>
-<div class="warn-box">
-    <b>Риски WordPress для производителя биосубстратов:</b>
-    <br>• <b>Уязвимость к взлому:</b> более 90% взломов сайтов малого бизнеса происходят через уязвимости сторонних PHP-плагинов WordPress — подмена платёжных реквизитов или спам-рассылка с домена бренда ведут к прямой потере доверия клиентов.
-    <br>• <b>Штрафы и блокировки по 109-ФЗ:</b> случайное употребление запрещённых формулировок («пестицид», «лечение растений») влечёт санкции Россельхознадзора и блокировку рекламных кабинетов.
-    <br>• <b>Потеря мобильного трафика:</b> тяжёлые скрипты WordPress медленно открываются на дачных участках и в полях при слабом 3G/4G-сигнале.
-</div>
-
-<div class="ok-box">
-    <b>Маркетинговые и коммерческие преимущества новой платформы MICOVALD:</b>
-    <br>• <b>Рост конверсии:</b> покупатель видит реальный остаток на складе, получает скидку <b>−5%</b> после регистрации, может сразу задать вопрос в чате без регистрации и оформить заказ с доставкой в 2 клика.
-    <br>• <b>Гибкое управление акциями:</b> скидки можно запускать как на весь каталог, так и точечно на выбранную категорию или назначение (например, <i>«−10% на наборы и комплекты»</i>), а аналитика <b>упущенного спроса</b> подсказывает, какие позиции добавить в ассортимент.
-    <br>• <b>Экспертный авторитет (<a href="https://iherb.com">модель iHerb</a>):</b> научные лекции интегрированы в навигацию и карточки товаров, подтверждая эффективность продукции научными данными.
-</div>
-
-</body>
-</html>
+<div class="box"><b>Инструкция переноса на любую машину:</b> склонируйте репозиторий, перенесите вручную <code>integrations.txt</code> и папку <code>data/</code> (исключены из Git в целях безопасности) и выполните <code>./start.sh</code>. Для включения боевой оплаты выполните <code>./switch_to_yookassa.py &lt;SHOP_ID&gt; &lt;SECRET_KEY&gt;</code>.</div>
+</body></html>

@@ -1,7 +1,11 @@
 localhost:443 {
     tls internal
+    @forbidden_files path_regexp ^/(\.|data/|backups/|app/|integrations|.*\.(py|json|log|bak|sh|env)$)
+    respond @forbidden_files 403
     reverse_proxy web:8000
 }
 :80 {
+    @forbidden_files path_regexp ^/(\.|data/|backups/|app/|integrations|.*\.(py|json|log|bak|sh|env)$)
+    respond @forbidden_files 403
     reverse_proxy web:8000
 }

@@ -1,22 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-{% if is_admin %}
-<div class="card" style="margin-bottom:18px; border:2px solid #133829; background:#F8FAF9; text-align:left; align-items:stretch;">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <div>
-            <b style="color:#133829; font-size:16px;">★ Режим владельца и администратора MICOVALD</b>
-            <div style="font-size:13px; color:#4B5563;">Управление заказами, отчётностью КУДиР ФНС, акциями, лекциями и диалогами с покупателями.</div>
-        </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <a href="/owner?tab=orders" class="filter-btn active" style="text-decoration:none;">📦 Заказы и КУДиР</a>
-            <a href="/owner?tab=chats" class="filter-btn" style="text-decoration:none;">💬 Чаты ({{ admin_unread_chat or 0 }})</a>
-            <a href="/owner?tab=promos" class="filter-btn" style="text-decoration:none;">🎁 Акции</a>
-            <a href="/owner?tab=lectures" class="filter-btn" style="text-decoration:none;">📚 Лекции</a>
-            <a href="/owner?tab=farmers" class="filter-btn" style="text-decoration:none;">🌾 Обращения</a>
-        </div>
-    </div>
-</div>
-{% endif %}
+
 <div style="max-width:780px; margin:24px auto; display:flex; flex-direction:column; gap:18px;">
     {% if request.query_params.get('welcome') %}<div style="background:#D1FAE5; color:#065F46; padding:12px; border-radius:6px; font-size:13px;"><b>✓ Добро пожаловать!</b> Ваша персональная скидка 5% активна. <a href="/" style="color:#065F46; font-weight:700;">Перейти в каталог →</a></div>{% endif %}
     {% if msg %}<div style="background:#D1FAE5; color:#065F46; padding:10px 14px; border-radius:6px; font-size:13px; font-weight:600;">✓ Изменения успешно сохранены!</div>{% endif %}
@@ -25,7 +9,7 @@
     <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
             <h2 style="color:#133829;">👤 Личный кабинет: {{ user }} {% if is_admin %}<span class="badge" style="background:#FEF3C7; color:#92400E;">Администратор</span>{% endif %}</h2>
-            {% if is_admin %}<a href="/owner" class="filter-btn active" style="background:#133829;">★ Перейти в Кабинет владельца →</a>{% endif %}
+            {% if is_admin %}{% endif %}
         </div>
         {% if not is_admin %}<p style="font-size:13px; color:#2E7D32; font-weight:600; margin-bottom:14px;">✓ Персональная скидка 5% активна в корзине</p>{% endif %}
         <form action="/account/profile" method="post" style="display:flex; flex-direction:column; gap:10px; border-top:1px solid #eee; padding-top:12px;">

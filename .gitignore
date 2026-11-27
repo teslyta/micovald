@@ -1,9 +1,11 @@
-integrations.txt
-integrations_bkp.txt
-*.env
-data/
-backups/
 __pycache__/
 *.py[cod]
+.env
+integrations.txt
+integrations_bkp.txt
+data/
+backups/
 *.log
+*.pem
+*.key
 .DS_Store

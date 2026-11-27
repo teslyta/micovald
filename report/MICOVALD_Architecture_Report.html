@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><style>
+@page { size: A4; margin: 13mm 12mm; }
+body { font-family: "DejaVu Sans", Arial, sans-serif; color: #1A2421; font-size: 9.2pt; line-height: 1.45; margin: 0; }
+.hero { background: linear-gradient(135deg, #0E2B20 0%, #1B4D38 100%); color: #fff; padding: 16px 20px; border-radius: 10px; margin-bottom: 12px; }
+.hero h1 { margin: 0 0 5px; font-size: 15.5pt; } .hero p { margin: 0; color: #A7F3D0; font-size: 9pt; }
+h2 { color: #133829; font-size: 12pt; border-bottom: 2px solid #2E7D32; padding-bottom: 3px; margin-top: 14px; page-break-after: avoid; }
+h3 { color: #1B4D38; font-size: 10.3pt; margin: 10px 0 5px; page-break-after: avoid; }
+.row { display: flex; gap: 9px; margin: 7px 0; }
+.shot { flex: 1; border: 1px solid #C6DDD0; border-radius: 7px; padding: 6px; text-align: center; background: #FAFDFB; }
+.shot img { width: 100%; height: 150px; object-fit: contain; border-radius: 4px; border: 1px solid #E5E7EB; background: #fff; }
+.shot div { font-size: 8pt; font-weight: bold; color: #133829; margin-top: 4px; }
+.card-desc { background: #F4F9F6; border-left: 4px solid #2E7D32; padding: 8px 12px; border-radius: 6px; margin: 6px 0; }
+ul { margin: 5px 0 8px 18px; padding: 0; } li { margin-bottom: 4px; }
+a { color: #1D4ED8; }
+</style></head><body>
+
+<div class="hero">
+    <h1>🌿 Архитектура и UX/UI-решения e-commerce платформы MICOVALD</h1>
+    <p>Обзор реализованных модулей, навигации, умного поиска, складского учёта, безопасности и адаптивной вёрстки</p>
+</div>
+
+<h2>1. Визуализация всех частей системы (ПК -> Мобильная версия)</h2>
+<h3>Десктопная версия (ПК)</h3>
+<div class="row">
+    <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/01_pc_home.png"><div>1. Главная витрина, меню и составной поиск</div></div>
+    <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/02_pc_product.png"><div>2. Карточка товара, галерея, остатки и доставка</div></div>
+    <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/03_pc_cart.png"><div>3. Корзина, расчёт акций и автоподсказки адреса</div></div>
+</div>
+<div class="row">
+    <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/04_pc_encyclopedia.png"><div>4. Научная энциклопедия и лекции для хозяйств</div></div>
+    <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/05_pc_login_2fa.png"><div>5. Авторизация, регистрация и защита 2FA</div></div>
+</div>
+
+<h3>Мобильная версия (Смартфон)</h3>
+<div class="row">
+    <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/06_mob_home.png"><div>6. Мобильная витрина: акция сверху, сетка 2 в ряд и чат</div></div>
+    <div class="shot"><img src="file:///home/maria/mikovald/docs/screenshots/07_mob_product.png"><div>7. Мобильная карточка товара, избранное и доставка</div></div>
+</div>
+
+<h2>2. Обоснование ключевых продуктовых и технических решений</h2>
+
+<div class="card-desc">
+    <b>1. Навигация и структура меню (паттерн ведущих маркетплейсов):</b>
+    <ul>
+        <li><b>Пункты основного меню:</b> «Каталог» (все позиции), «Субстраты почвенные», «Наборы и комплекты», «Энциклопедия и лекции» (выпадающий список научных статей), «О производителе», «Избранное» со счётчиком, «Корзина» с живым индикатором количества и выпадающее меню «Аккаунт и заказы».</li>
+        <li><b>Почему выбрано такое решение:</b> разделение на базовые субстраты и готовые комплекты сокращает путь покупателя до целевого товара до 1 клика, а выпадающие списки при наведении разгружают первый экран от визуального шума.</li>
+    </ul>
+</div>
+
+<div class="card-desc">
+    <b>2. Составной поиск с выбором категории и умными подсказками (стандарт <a href="https://amazon.com">Amazon</a>):</b>
+    <ul>
+        <li><b>Как устроено:</b> слева в поисковой капсуле расположен селектор категории («Все категории», направления и назначения), который сразу фильтрует витрину при переключении, а справа — поле текстового поиска с сохранением выбранного фильтра.</li>
+        <li><b>Дополнительная логика:</b> если по запросу нет отдельного товара, система автоматически предлагает релевантные научные материалы из «Энциклопедии» и фиксирует запрос в аналитике упущенного спроса для расширения ассортимента.</li>
+    </ul>
+</div>
+
+<div class="card-desc">
+    <b>3. Карточка товара, контроль остатков и динамическая корзина (стандарты <a href="https://ebay.com">eBay</a> и <a href="https://ozon.ru">Ozon</a>):</b>
+    <ul>
+        <li><b>Галерея и информативность:</b> вертикальный ряд миниатюр слева + крупное фото с увеличением по клику; отображение реального остатка на складе (<code>stock</code>) с запретом заказа сверх наличия и автоматическим списанием при оформлении.</li>
+        <li><b>Интерактивная кнопка корзины:</b> после добавления товара кнопка превращается в панель <code>− [🛒 N] +</code>, позволяя менять количество прямо из каталога. Выбранный способ доставки (Почта РФ, СДЭК, Самовывоз) сквозным образом запоминается на всех карточках и в корзине.</li>
+    </ul>
+</div>
+
+<div class="card-desc">
+    <b>4. Клиентский сервис без барьеров: Избранное, онлайн-чат и автоподсказки адресов:</b>
+    <ul>
+        <li><b>Гостевой режим:</b> добавление в «Избранное» и переписка в плавающем онлайн-чате (справа внизу) работают без обязательной регистрации; при выходе из аккаунта сессионные данные очищаются, а неактивные чаты старше 24 часов удаляются автоматически.</li>
+        <li><b>Умный ввод адреса:</b> при вводе 6-значного почтового индекса РФ автоматически определяется город и открывается прокручиваемый список улиц с поддержкой навигации стрелками клавиатуры (<code>↓ / ↑ / Enter</code>) и подсказкой номеров домов, корпусов и строений.</li>
+    </ul>
+</div>
+
+<div class="card-desc">
+    <b>5. Адаптивность, доступность (WCAG/ARIA), 109-ФЗ и финансово-налоговый контур:</b>
+    <ul>
+        <li><b>Адаптивная сетка:</b> на ПК — классическая двухколоночная витрина с боковой панелью акций; на планшете — 3 карточки в ряд; на смартфоне — акция выносится первым блоком под меню, далее компактная сетка 2 карточки в ряд. Все иконки снабжены <code>aria-label</code> для скринридеров.</li>
+        <li><b>Защита и отчётность:</b> встроенный фильтр стоп-слов по 109-ФЗ, учёт доходов/расходов и возвратов с экспортом <b>КУДиР для ФНС</b>, двухфакторная защита <b>2FA</b> (Email/SMS), защита от парсеров и кнопка отката изменений (<code>Undo</code>).</li>
+    </ul>
+</div>
+
+</body></html>

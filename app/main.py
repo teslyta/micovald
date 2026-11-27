@@ -22,6 +22,19 @@ from undo_mgr import save_undo, get_undo, apply_undo
 from validators import validate_order_data
 
 app = FastAPI()
+
+@app.middleware("http")
+async def anti_clone_protection(request: Request, call_next):
+    ua = (request.headers.get("user-agent") or "").lower()
+    bad_agents = ("httrack", "webcopier", "teleport", "offline explorer", "sitegrabber", "webzip", "nikto", "sqlmap")
+    if any(b in ua for b in bad_agents):
+        return Response("Access Denied", status_code=403)
+    resp = await call_next(request)
+    resp.headers["X-Frame-Options"] = "DENY"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return resp
+
 app.mount("/media", StaticFiles(directory="/app/media"), name="media")
 @app.on_event("startup")
 def on_start(): check_fz109_updates()
@@ -168,7 +181,7 @@ async def save_prof(request: Request, fio: str = Form(""), email: str = Form(...
     users = load_users()
     users[u]["fio"], users[u]["email"], users[u]["phone"] = fio.strip(), email.strip(), phone.strip()
     USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2))
-    return RedirectResponse("/account?msg=1", 303)
+    return RedirectResponse("/cart?ordered=1", 303)
 
 @app.post("/login")
 async def do_login(request: Request, login: str = Form(...), password: str = Form(...), otp: str = Form("")):
@@ -220,7 +233,7 @@ async def ch_pass(request: Request, new_password: str = Form(...), otp: str = Fo
             return RedirectResponse("/account?err=" + urllib.parse.quote("Неверный или не запрошенный код подтверждения 2FA"), 303)
     users = load_users(); users[l]["pw"] = hash_pw(pw)
     USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2))
-    return RedirectResponse("/account?msg=1", 303)
+    return RedirectResponse("/cart?ordered=1", 303)
 
 @app.get("/order/create")
 async def order_get_redir(): return RedirectResponse("/cart", 303)
@@ -238,7 +251,7 @@ async def create_order(request: Request, fio: str = Form(...), phone: str = Form
 async def user_cancel_order(request: Request, oid: int):
     u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
     if u and any(x.get("id") == oid and x.get("source") == u for x in get_records()): refund_order(oid)
-    return RedirectResponse("/account?msg=1", 303)
+    return RedirectResponse("/cart?ordered=1", 303)
 
 @app.post("/farmers/send")
 async def farmers_send(request: Request, kind: str = Form("Сотрудничество"), name: str = Form(...), phone: str = Form(...), farm: str = Form(""), msg: str = Form(...)):
@@ -355,7 +368,7 @@ async def owner_ord_del(request: Request, oid: int):
 async def owner_farm_del(request: Request, fid: int):
     if is_admin_user(verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))):
         save_undo(FARM_FILE, "удаление обращения", "/owner"); del_farmer(fid)
-    return RedirectResponse("/owner?tab=sec&msg=1", 303)
+    return RedirectResponse("/owner?tab=farmers&msg=1", 303)
 
 @app.get("/owner/export.csv")
 async def owner_csv(request: Request):
@@ -376,7 +389,10 @@ async def do_undo(request: Request):
 
 @app.get("/logout")
 async def logout():
-    r = RedirectResponse("/", 303); r.delete_cookie("user"); return r
+    r = RedirectResponse("/?logged_out=1", 303); r.delete_cookie("user"); r.headers["Clear-Site-Data"] = '"storage"'; return r
+
+@app.get("/owner/product-save")
+async def save_prod_get(): return RedirectResponse("/", 303)
 
 @app.post("/owner/product-save")
 async def save_prod_full(request: Request, pid: int = Form(0), name: str = Form(...), desc: str = Form(""), price: int = Form(...), stock: int = Form(1), cat: str = Form(""), new_cat: str = Form(""), purp: str = Form(""), new_purp: str = Form(""), photo: UploadFile = File(None), extra_photos: list[UploadFile] = File(None)):
@@ -384,11 +400,14 @@ async def save_prod_full(request: Request, pid: int = Form(0), name: str = Form(
     c_val = new_cat.strip() or cat
     p_val = new_purp.strip() or purp
     sw_hit = check_stop_words(f"{name} {desc} {c_val} {p_val}")
-    if sw_hit: return RedirectResponse(f"/product/{pid}?err_sw={urllib.parse.quote(sw_hit)}" if pid > 0 else f"/?err=stop&sw={urllib.parse.quote(sw_hit)}", 303)
+    if sw_hit: return RedirectResponse(f"/product/{pid}?err_sw={urllib.parse.quote(", ".join(sw_hit))}" if pid > 0 else f"/?err=stop&sw={urllib.parse.quote(", ".join(sw_hit))}", 303)
     if new_cat.strip(): add_tax("directions", c_val)
     if new_purp.strip(): add_tax("purposes", p_val)
     old = next((x for x in get_products() if x["id"] == pid), {}) if pid > 0 else {}
-    img_url = await save_safe_image(photo, "products") if (photo and getattr(photo, "filename", "")) else old.get("img", "/media/products/p1.webp")
+    img_url = old.get("img", "/media/products/p1.webp")
+    if photo and getattr(photo, "filename", ""):
+        saved_u = await save_safe_image(photo, "products")
+        if saved_u: img_url = saved_u
     imgs_list = [img_url] + [x for x in (old.get("images") or []) if x and x != img_url]
     for ep in (extra_photos or []):
         if ep and getattr(ep, "filename", ""):
@@ -443,7 +462,7 @@ async def user_toggle_2fa(request: Request, enable: str = Form("0")):
         return RedirectResponse("/account?err=" + urllib.parse.quote("Сначала укажите и сохраните Email в контактных данных выше"), 303)
     users[u]["2fa"] = (enable == "1")
     USERS_FILE.write_text(json.dumps(users, ensure_ascii=False, indent=2), encoding="utf-8")
-    return RedirectResponse("/account?msg=1", 303)
+    return RedirectResponse("/cart?ordered=1", 303)
 
 @app.post("/owner/promo/save")
 async def owner_promo_save(request: Request, pid: int = Form(0), title: str = Form(...), desc: str = Form(...), discount: int = Form(10), start_date: str = Form(...), end_date: str = Form(...), target_cat: str = Form("")):
@@ -475,7 +494,7 @@ async def product_detail(request: Request, pid: int):
 @app.get("/chat", response_class=HTMLResponse)
 async def chat_page(request: Request, prod: str = ""):
     u_chk = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
-    if is_admin_user(u_chk): return RedirectResponse("/owner?tab=chats", 303)
+    if is_admin_user(u_chk): return RedirectResponse("/owner?tab=chats&msg=1", 303)
     actor, is_guest = get_chat_actor(request)
     resp = templates.TemplateResponse(request, "chat.html", ctx(request, messages=get_user_chat(actor, mark_read=True), prod_q=prod))
     if is_guest: resp.set_cookie("guest_chat_id", actor, max_age=86400*30, httponly=True, samesite="lax")
@@ -503,8 +522,8 @@ async def owner_chat_reply(request: Request, target_user: str = Form(...), text:
     u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
     if not is_admin_user(u): return RedirectResponse("/login", 303)
     add_chat_msg(target_user, "admin", text)
-    mark_admin_read, delete_chat(target_user)
-    return RedirectResponse("/owner?tab=farmers", 303)
+    mark_admin_read(target_user)
+    return RedirectResponse("/owner?tab=chats&msg=1", 303)
 
 @app.get("/favorites", response_class=HTMLResponse)
 async def favorites_page(request: Request):
@@ -515,4 +534,135 @@ async def owner_chat_delete(request: Request, target_user: str = Form(...)):
     u = verify_session(request.cookies.get("user", ""), request.headers.get("user-agent", ""))
     if not is_admin_user(u): return RedirectResponse("/login", 303)
     delete_chat(target_user)
-    return RedirectResponse("/owner?tab=chats", 303)
+    return RedirectResponse("/owner?tab=chats&msg=1", 303)
+
+@app.get("/api/suggest-addr")
+async def api_suggest_addr(q: str = "", zip_code: str = ""):
+    import urllib.request, urllib.parse, re as _re
+    raw_q = q.strip()
+    s = _re.sub(r'(?:^|\s)(?:г\.|гор\.|п\.|пос\.|ул\.|улица|пр\.|пр-т|проспект|ш\.|шоссе|д\.|дом|к\.|корп\.|стр\.|литера)(?=\s|$)', ' ', raw_q.replace(',', ' '), flags=_re.I)
+    s = " ".join(s.split()).strip()
+    z = "".join(c for c in zip_code if c.isdigit())
+    if len(s) < 2 and len(z) != 6: return {"items": []}
+
+    cache_file = Path("/app/data/zip_cache.json")
+    try: zcache = json.loads(cache_file.read_text(encoding="utf-8")) if cache_file.exists() else {}
+    except Exception: zcache = {}
+
+    ua = {"User-Agent": "MICOVALD-Shop/1.0 (micovald@yandex.ru)"}
+
+    # 1. Пробуем определить город и улицы по 6-значному индексу через OpenStreetMap (с валидным User-Agent)
+    if len(z) == 6 and z not in zcache:
+        try:
+            u_nom = f"https://openstreetmap.org{z}"
+            req = urllib.request.Request(u_nom, headers=ua)
+            with urllib.request.urlopen(req, timeout=2.5) as resp:
+                rows = json.loads(resp.read().decode("utf-8"))
+                city_lbl, lat, lon, found_streets = "", None, None, []
+                for r in rows:
+                    a = r.get("address", {})
+                    reg = a.get("state") or ""
+                    ct = a.get("city") or a.get("town") or a.get("village") or a.get("municipality") or ""
+                    st = a.get("road") or ""
+                    if st and st not in found_streets: found_streets.append(st)
+                    if not city_lbl and (ct or reg):
+                        parts = [p for p in [reg if reg != ct else "", (f"г. {ct}" if a.get("city") or a.get("town") else ct)] if p]
+                        city_lbl = ", ".join(parts)
+                        lat, lon = r.get("lat"), r.get("lon")
+                if city_lbl and lat and lon and len(found_streets) < 6:
+                    ov_q = f'[out:json][timeout:3];way(around:2500,{lat},{lon})["highway"]["name"];out tags 35;'
+                    req_ov = urllib.request.Request("https://overpass-api.de", data=("data=" + urllib.parse.quote(ov_q)).encode("utf-8"), headers=ua)
+                    with urllib.request.urlopen(req_ov, timeout=3) as r_ov:
+                        ov_data = json.loads(r_ov.read().decode("utf-8"))
+                        for el in ov_data.get("elements", []):
+                            nm = el.get("tags", {}).get("name", "")
+                            if nm and nm not in found_streets and len(nm) > 3:
+                                found_streets.append(nm)
+                if city_lbl:
+                    zcache[z] = [city_lbl, found_streets[:25]]
+                    cache_file.write_text(json.dumps(zcache, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
+    # Резервный справочник регионов и крупных городов РФ по 3-значному и 2-значному префиксу индекса (на случай недоступности OSM)
+    if len(z) == 6 and z not in zcache:
+        pref3 = {
+            "162": ("Вологодская область, г. Череповец", ["Советский проспект", "проспект Победы", "улица Ленина", "проспект Строителей", "улица Металлургов", "Шекснинский проспект"]),
+            "160": ("Вологодская область, г. Вологда", ["улица Ленина", "проспект Победы", "Пошехонское шоссе", "Ленинградская улица"]),
+            "188": ("Ленинградская область, г. Всеволожск", ["Московская улица", "Центральная улица", "улица Вахрушева", "Колтушское шоссе", "Южное шоссе", "улица Героев", "Народная улица"]),
+            "187": ("Ленинградская область, г. Тосно", ["проспект Ленина", "Советская улица", "Московское шоссе"]),
+            "195": ("г. Санкт-Петербург", ["Заневский проспект", "Пискарёвский проспект", "Полюстровский проспект", "Новочеркасский проспект"]),
+            "191": ("г. Санкт-Петербург", ["Невский проспект", "Лиговский проспект", "Владимирский проспект", "Литейный проспект"]),
+            "125": ("г. Москва", ["Тверская улица", "Ленинградский проспект", "Большая Никитская улица"]),
+            "630": ("Новосибирская область, г. Новосибирск", ["Красный проспект", "улица Ленина", "улица Кирова"]),
+            "620": ("Свердловская область, г. Екатеринбург", ["проспект Ленина", "улица Малышева", "улица 8 Марта"]),
+            "350": ("Краснодарский край, г. Краснодар", ["Красная улица", "улица Северная", "улица Ставропольская"]),
+            "420": ("Республика Татарстан, г. Казань", ["улица Баумана", "проспект Ямашева", "улица Пушкина"]),
+        }
+        pref2 = {
+            "10": ("г. Москва", []), "11": ("г. Москва", []), "12": ("г. Москва", []), "14": ("Московская область", []),
+            "18": ("Ленинградская область", []), "19": ("г. Санкт-Петербург", []),
+            "34": ("Ростовская область, г. Ростов-на-Дону", []), "35": ("Краснодарский край", []),
+            "42": ("Республика Татарстан", []), "44": ("Самарская область", []), "45": ("Челябинская область", []),
+            "60": ("Нижегородская область", []), "62": ("Свердловская область", []), "63": ("Новосибирская область", []),
+            "66": ("Красноярский край", []), "69": ("Приморский край, г. Владивосток", []),
+        }
+        if z[:3] in pref3: zcache[z] = list(pref3[z[:3]])
+        elif z[:2] in pref2: zcache[z] = list(pref2[z[:2]])
+
+    out = []
+    if len(z) == 6 and z in zcache:
+        city_lbl, streets = zcache[z]
+        s_clean = s.lower()
+        for w in (city_lbl.lower() + " санкт петербург москва краснодар новосибирск екатеринбург казань").replace(",", "").split():
+            if len(w) >= 3: s_clean = s_clean.replace(w, " ")
+        street_tokens = [w for w in s_clean.split() if len(w) >= 2 and not w.isdigit()]
+        nums = [w for w in s.split() if w.isdigit()]
+        if streets:
+            for st in streets:
+                if not street_tokens or all(t in st.lower() for t in street_tokens):
+                    if nums:
+                        h_num = nums[0]
+                        out.append({"addr": f"{city_lbl}, {st}, д. {h_num}", "zip": z})
+                        for suf in ["к. 1", "к. 2", "стр. 1", "литера А"]:
+                            out.append({"addr": f"{city_lbl}, {st}, д. {h_num}, {suf}", "zip": z})
+                    elif street_tokens:
+                        for h in ["1", "2", "5", "10", "15", "25"]:
+                            out.append({"addr": f"{city_lbl}, {st}, д. {h}", "zip": z})
+                    else:
+                        out.append({"addr": f"{city_lbl}, {st}, ", "zip": z, "keep_typing": True})
+        if not out:
+            if nums and street_tokens:
+                base_st = " ".join(street_tokens).capitalize()
+                h_num = nums[0]
+                out.append({"addr": f"{city_lbl}, {base_st}, д. {h_num}", "zip": z})
+                for suf in ["к. 1", "стр. 1", "литера А"]:
+                    out.append({"addr": f"{city_lbl}, {base_st}, д. {h_num}, {suf}", "zip": z})
+            elif street_tokens:
+                base_st = " ".join(street_tokens).capitalize()
+                for h in ["1", "5", "10", "15", "25"]:
+                    out.append({"addr": f"{city_lbl}, {base_st}, д. {h}", "zip": z})
+            else:
+                out.append({"addr": f"{city_lbl}, ", "zip": z, "prefix_only": True})
+        return {"items": out[:15]}
+
+    # 2. Поиск по произвольному тексту адреса без индекса через Nominatim OSM
+    if len(s) >= 3:
+        try:
+            u_txt = "https://openstreetmap.org" + urllib.parse.quote(s)
+            req = urllib.request.Request(u_txt, headers=ua)
+            with urllib.request.urlopen(req, timeout=2.5) as resp:
+                for r in json.loads(resp.read().decode("utf-8")):
+                    a = r.get("address", {})
+                    reg = a.get("state") or ""
+                    ct = a.get("city") or a.get("town") or a.get("village") or ""
+                    st = a.get("road") or a.get("suburb") or ""
+                    hs = a.get("house_number") or ""
+                    pc = a.get("postcode") or z
+                    parts = [p for p in [reg if reg != ct else "", (f"г. {ct}" if a.get("city") or a.get("town") else ct), st, ("д. " + hs if hs else "")] if p]
+                    lbl = ", ".join(parts)
+                    if lbl and not any(x["addr"] == lbl for x in out):
+                        out.append({"addr": lbl, "zip": pc, "keep_typing": not bool(hs)})
+        except Exception:
+            pass
+    return {"items": out[:15]}

@@ -82,3 +82,11 @@ header { background: linear-gradient(135deg, #0E2B20 0%, #184734 100%); color: #
     .price { font-size: 17px !important; }
     .btn-cart { padding: 9px 10px !important; font-size: 13px !important; }
 }
+
+@media (max-width: 1080px) {
+    .layout-grid { display: flex !important; flex-direction: column !important; }
+    .layout-grid > aside { display: contents !important; }
+    .layout-grid > aside > #promo-box { order: 1 !important; width: 100% !important; margin: 0 0 10px 0 !important; }
+    .layout-grid > .grid { order: 2 !important; width: 100% !important; }
+    .layout-grid > aside > *:not(#promo-box) { order: 3 !important; width: 100% !important; }
+}

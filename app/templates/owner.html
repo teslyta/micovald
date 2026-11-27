@@ -3,17 +3,14 @@
 <div style="max-width:960px; margin:20px auto;">
     {% if msg %}<div style="background:#D1FAE5; color:#065F46; padding:10px 14px; border-radius:6px; font-size:13px; font-weight:600; margin-bottom:14px;">✓ Изменения успешно сохранены!</div>{% endif %}
 
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; border-bottom:2px solid #D1DDD6; padding-bottom:10px;">
-        <button type="button" class="tab-btn filter-btn active" onclick="openTab('t-orders', this)">📦 Заказы и КУДиР ({{ recs|length }})</button>
-        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-stats', this)">📊 Статистика и диаграммы</button>
-        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-promo', this)">🎁 Акции</button>
-        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-enc', this)">📚 Энциклопедия</button>
-        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-farm', this)">🌾 Обращения ({{ farmers|length }})</button>
-        <button type="button" class="tab-btn filter-btn" onclick="openTab('t-sec', this)">🛡️ Безопасность и 2FA</button>
-        <button type="button" class="tab-btn filter-btn" onclick="openTab('tab-chats', this)">💬 Чаты ({{ admin_unread_chat or 0 }})</button>
+    {% set cur_tab = request.query_params.get('tab', 'orders') %}
+    {% set tab_names = {'orders':'📦 Заказы и книга учёта КУДиР (ФНС)', 'stats':'📊 Статистика и аналитика', 'promos':'🎁 Управление акциями и скидками', 'lectures':'📚 Управление лекциями и энциклопедией', 'farmers':'🌾 Обращения фермеров и хозяйств', 'sec':'🛡️ Безопасность и 2FA', 'chats':'💬 Диалоги с покупателями'} %}
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+        <h1 style="color:#133829; font-size:22px; margin:0;">{{ tab_names.get(cur_tab, 'Управление магазином') }}</h1>
+        <a href="/account" style="color:#2E7D32; font-weight:700; text-decoration:none; font-size:13px;">← В личный кабинет</a>
     </div>
 
-    <div id="t-orders" class="tab-pane card" style="border-top:4px solid #E67E22;">
+    <div id="t-orders" class="tab-pane card" style="display:{{ 'block' if cur_tab=='orders' else 'none' }}; border-top:4px solid #E67E22;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
             <h2 style="color:#133829;">Заказы, трек-номера и КУДиР ФНС</h2>
             <form action="/owner/clear-test" method="post" onsubmit="return confirm('Удалить все тестовые заказы и обнулить статистику визитов?')" style="display:inline;margin:0;"><button style="background:#FEF3C7;color:#92400E;border:1px solid #F59E0B;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">🧹 Очистить тестовые данные</button></form>
@@ -61,7 +58,7 @@
             {% else %}<div style="color:#6B7280; font-size:13px;">Заказов и записей пока нет.</div>{% endfor %}
         </div>
     </div>
-    <div id="t-stats" class="tab-pane card" style="display:none; border-top:4px solid #059669;">
+    <div id="t-stats" class="tab-pane card" style="display:{{ 'block' if cur_tab=='stats' else 'none' }}; border-top:4px solid #059669;">
         <h2 style="color:#133829; margin-bottom:12px;">📊 Аналитика посетителей и воронка конверсии</h2>
         {% set v_list = (stats.visits.values()|list) if stats and stats.visits else [] %}
         {% set total_v = v_list|length %}
@@ -98,7 +95,7 @@
         </div>
     </div>
 
-    <div id="t-promo" class="tab-pane card" style="display:none; border-top:4px solid #D97706;">
+    <div id="t-promo" class="tab-pane card" style="display:{{ 'block' if cur_tab=='promos' else 'none' }}; border-top:4px solid #D97706;">
         <h2 style="color:#133829; margin-bottom:10px;">🎁 Управление акциями и архив </h2>
         <form action="/owner/promo/save" method="post" style="display:flex; flex-direction:column; gap:10px; background:#FFFBEB; padding:14px; border-radius:8px; border:1px solid #F59E0B; margin-bottom:16px;">
             <b style="color:#92400E;">Запустить новую акцию (отображается слева от каталога)</b>
@@ -140,7 +137,7 @@
         </div>
     </div>
 
-    <div id="t-enc" class="tab-pane card" style="display:none; border-top:4px solid #2E7D32;">
+    <div id="t-enc" class="tab-pane card" style="display:{{ 'block' if cur_tab=='lectures' else 'none' }}; border-top:4px solid #2E7D32;">
         <h2 style="color:#133829; margin-bottom:10px;">📚 Добавить лекцию или раздел в Энциклопедию</h2>
         <form action="/owner/lecture" method="post" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:10px;">
             <input type="hidden" name="lec_id" value="0">
@@ -159,7 +156,7 @@
         </form>
     </div>
 
-    <div id="t-farm" class="tab-pane card" style="display:none; border-top:4px solid #2563EB;">
+    <div id="t-farm" class="tab-pane card" style="display:{{ 'block' if cur_tab=='farmers' else 'none' }}; border-top:4px solid #2563EB;">
         <h2 style="color:#133829; margin-bottom:10px;">🌾 Обращения фермеров и покупателей ({{ farmers|length }})</h2>
         <div style="display:flex; flex-direction:column; gap:8px;">
             {% for f in farmers %}
@@ -171,7 +168,7 @@
         </div>
     </div>
 
-    <div id="t-sec" class="tab-pane card" style="display:none; border-top:4px solid #133829; font-size:13px;">
+    <div id="t-sec" class="tab-pane card" style="display:{{ 'block' if cur_tab=='sec' else 'none' }}; border-top:4px solid #133829; font-size:13px;">
         <h2 style="color:#133829; margin-bottom:10px;">🛡️ Безопасность, 2FA по Email и права доступа</h2>
         <p style="margin-bottom:12px; color:#374151;">Активна защита: <b>PBKDF2-SHA256</b>, тайм-аут сессии 30 мин, защита от перебора паролей, <b>CSRF-фильтр</b>, автобэкап базы и стоп-фильтр <b>109-ФЗ</b>.</p>
         <form action="/owner/2fa" method="post" style="display:flex; gap:10px; align-items:center; margin-bottom:14px;">
@@ -187,7 +184,7 @@
         </form>
     </div>
 </div>
-<div id="tab-chats" class="tab-pane card" style="display:none; border-top:4px solid #2E7D32;">
+<div id="tab-chats" class="tab-pane card" style="display:{{ 'block' if cur_tab=='chats' else 'none' }}; border-top:4px solid #2E7D32;">
     <h3 style="color:#133829; margin-bottom:12px;">💬 Диалоги с покупателями и гостями</h3>
     {% for uname, msgs in (all_chats or {}).items() %}
     <div class="card" style="margin-bottom:14px; border:1px solid #C6DDD0; text-align:left; align-items:stretch;">

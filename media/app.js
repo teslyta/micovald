@@ -379,4 +379,20 @@
         }
     });
 
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let sp = new URLSearchParams(location.search);
+        if (sp.get('demo_showcase') === '1') {
+            let favBtns = document.querySelectorAll('.fav-heart');
+            if (favBtns && !JSON.parse(localStorage.getItem('mico_favs') || '[]').length) {
+                window.toggleFavBtn(favBtns);
+            }
+            let cartBtns = document.querySelectorAll('[data-pid]');
+            let targetBtn = cartBtns || cartBtns;
+            if (targetBtn && !getCleanCart().length) {
+                window.addCartBtn(targetBtn, 2);
+            }
+        }
+    });
+
 })();

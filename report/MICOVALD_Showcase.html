@@ -1,51 +1,42 @@
 <!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><style>
-@page { size: A4; margin: 12mm 12mm; }
-body { font-family: "DejaVu Sans", Arial, sans-serif; color: #1A2421; font-size: 9.6pt; line-height: 1.48; margin: 0; }
-.cover { background: linear-gradient(135deg, #0E2B20 0%, #1B4D38 100%); color: #fff; padding: 24px 26px; border-radius: 12px; margin-bottom: 16px; }
-.cover h1 { margin: 0 0 8px; font-size: 18pt; line-height: 1.25; }
-.cover p { margin: 0; color: #A7F3D0; font-size: 10pt; }
-.kpi-row { display: flex; gap: 10px; margin: 14px 0 18px; }
-.kpi { flex: 1; background: #F3F8F5; border: 1px solid #C6DDD0; border-radius: 10px; padding: 10px 12px; text-align: center; }
-.kpi b { display: block; font-size: 13pt; color: #133829; margin-bottom: 3px; }
-.kpi span { font-size: 8.4pt; color: #374151; }
-.section { page-break-inside: avoid; margin-bottom: 18px; border: 1px solid #D5E4DC; border-radius: 12px; padding: 14px 16px; background: #FFFFFF; }
-.sec-title { color: #133829; font-size: 12.5pt; font-weight: bold; margin: 0 0 8px; border-bottom: 2px solid #2E7D32; padding-bottom: 4px; }
-.big-shot { width: 100%; border-radius: 8px; border: 1px solid #CBD5E1; margin: 6px 0 10px; display: block; }
-.mob-row { display: flex; gap: 16px; justify-content: center; margin: 8px 0 10px; }
-.mob-card { width: 44%; text-align: center; }
-.mob-card img { max-height: 112mm; width: auto; max-width: 100%; border-radius: 10px; border: 2px solid #133829; }
-.mob-card div { font-size: 8.6pt; font-weight: bold; color: #133829; margin-top: 5px; }
-.bullets { margin: 6px 0 0 18px; padding: 0; }
-.bullets li { margin-bottom: 5px; }
-.badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.pill { background: #E8F5E9; color: #133829; font-weight: bold; font-size: 8.3pt; padding: 4px 10px; border-radius: 14px; border: 1px solid #B7DEC2; }
-
+@page { size: A4; margin: 11mm 12mm; }
+body { font-family: "DejaVu Sans", Arial, sans-serif; color: #1A2421; font-size: 9.4pt; line-height: 1.44; margin: 0; }
 .title-page {
-    height: 266mm;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    height: 270mm; display: flex; flex-direction: column; justify-content: space-between;
     background: linear-gradient(155deg, #0E2B20 0%, #184734 55%, #236347 100%);
-    color: #FFFFFF;
-    padding: 28mm 22mm;
-    border-radius: 12px;
-    box-sizing: border-box;
-    page-break-after: always;
+    color: #FFFFFF; padding: 24mm 20mm; border-radius: 12px; box-sizing: border-box; page-break-after: always;
 }
-.tp-tag { display: inline-block; background: rgba(167,243,208,0.16); border: 1px solid #6EE7B7; color: #A7F3D0; padding: 5px 14px; border-radius: 20px; font-size: 9.5pt; font-weight: bold; margin-bottom: 18px; }
-.tp-title { font-size: 24pt; font-weight: bold; line-height: 1.25; margin: 0 0 14px; }
-.tp-sub { font-size: 11.5pt; color: #D1FAE5; line-height: 1.5; margin: 0 0 26px; }
-.tp-box { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 18px 20px; font-size: 10pt; line-height: 1.65; }
+.tp-tag { display: inline-block; background: rgba(167,243,208,0.16); border: 1px solid #6EE7B7; color: #A7F3D0; padding: 5px 14px; border-radius: 20px; font-size: 9pt; font-weight: bold; margin-bottom: 16px; }
+.tp-title { font-size: 22pt; font-weight: bold; line-height: 1.25; margin: 0 0 12px; }
+.tp-sub { font-size: 11pt; color: #D1FAE5; line-height: 1.48; margin: 0 0 22px; }
+.tp-box { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 16px 18px; font-size: 9.8pt; line-height: 1.6; }
 .tp-box b { color: #A7F3D0; }
-.tp-footer { text-align: center; font-size: 10.5pt; color: #A7F3D0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 14px; }
+.kpi-row { display: flex; gap: 10px; margin-top: 16px; }
+.kpi { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); border-radius: 10px; padding: 10px; text-align: center; }
+.kpi b { display: block; font-size: 11.5pt; color: #A7F3D0; margin-bottom: 3px; }
+.kpi span { font-size: 8.2pt; color: #E5E7EB; }
+.tp-footer { text-align: center; font-size: 10.5pt; color: #A7F3D0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 12px; }
 
+.page-sec { page-break-after: always; border: 1px solid #D5E4DC; border-radius: 12px; padding: 12px 15px; background: #FFFFFF; box-sizing: border-box; }
+.page-sec:last-child { page-break-after: auto; }
+.sec-title { color: #133829; font-size: 12pt; font-weight: bold; margin: 0 0 8px; border-bottom: 2px solid #2E7D32; padding-bottom: 4px; }
+.shot-wrap { text-align: center; background: #F8FAF9; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px; margin-bottom: 8px; }
+.big-shot { max-height: 158mm; width: auto; max-width: 100%; border-radius: 6px; display: inline-block; }
+.mob-row { display: flex; gap: 14px; justify-content: center; margin: 6px 0 8px; }
+.mob-card { width: 45%; text-align: center; background: #F8FAF9; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px; }
+.mob-card img { max-height: 148mm; width: auto; max-width: 100%; border-radius: 8px; border: 2px solid #133829; }
+.mob-card div { font-size: 8.3pt; font-weight: bold; color: #133829; margin-top: 4px; }
+.bullets { margin: 4px 0 0 18px; padding: 0; }
+.bullets li { margin-bottom: 4px; }
+.badge-row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 8px; }
+.pill { background: #E8F5E9; color: #133829; font-weight: bold; font-size: 8pt; padding: 3px 9px; border-radius: 12px; border: 1px solid #B7DEC2; }
 </style></head><body>
 
 <div class="title-page">
     <div>
         <div class="tp-tag">ПОРТФОЛИО-ПРОЕКТ • FULL-STACK E-COMMERCE & CRM</div>
         <h1 class="tp-title">🌿 MICOVALD — Веб-платформа интернет-магазина и управления продажами</h1>
-        <p class="tp-sub">Полнофункциональный коммерческий сервис для производителя почвенных биосубстратов: умный поиск, складской учёт, онлайн-чат, налоговая отчётность КУДиР и юридический фильтр по 109-ФЗ.</p>
+        <p class="tp-sub">Коммерческий сервис для производителя почвенных биосубстратов: умный поиск, живая корзина, избранное без регистрации, онлайн-чат, налоговая отчётность КУДиР и юридический фильтр по 109-ФЗ.</p>
         <div class="tp-box">
             <div><b>Автор проекта и архитектор:</b> Сивкова Ольга</div>
             <div><b>AI-соавтор разработки:</b> Google AI (Gemini)</div>
@@ -54,69 +45,62 @@ body { font-family: "DejaVu Sans", Arial, sans-serif; color: #1A2421; font-size:
             • <b>Frontend:</b> HTML5, CSS3 (Adaptive Grid/Flexbox, WCAG/ARIA), Vanilla JS (ES6+)<br>
             • <b>Инфраструктура и безопасность:</b> Docker, Docker Compose, Caddy (HTTPS/TLS), CSP, 2FA (Email/SMS), Anti-Scraping защита, Automated E2E Testing</div>
         </div>
+        <div class="kpi-row">
+            <div class="kpi"><b>Покупка в 2 клика</b><span>Умный поиск, живая корзина и автоподсказки адресов РФ</span></div>
+            <div class="kpi"><b>0 ₽ за виджеты</b><span>Свой онлайн-чат, расчёт доставки и акции без абонплаты</span></div>
+            <div class="kpi"><b>100% контроль</b><span>Складские остатки, КУДиР для ФНС, 2FA и фильтр 109-ФЗ</span></div>
+        </div>
     </div>
     <div class="tp-footer">Санкт-Петербург • 2026</div>
 </div>
 
-
-<div class="cover">
-    <h1>🌿 MICOVALD — Современная e-commerce платформа полного цикла</h1>
-    <p>Интуитивный интерфейс уровня мировых маркетплейсов, автоматизация продаж и складского учёта, встроенный онлайн-чат и юридическая защита бизнеса</p>
-</div>
-
-<div class="kpi-row">
-    <div class="kpi"><b>Покупка в 2 клика</b><span>Умный поиск, живая корзина и автоподсказки адресов РФ</span></div>
-    <div class="kpi"><b>0 ₽ за виджеты</b><span>Свой онлайн-чат, расчёт доставки и акции без абонплаты</span></div>
-    <div class="kpi"><b>100% контроль</b><span>Складские остатки, КУДиР для ФНС, 2FA и фильтр 109-ФЗ</span></div>
-</div>
-
-<div class="section">
-    <div class="sec-title">1. Главная витрина и умный составной поиск (ПК)</div>
-    <img class="big-shot" src="file:///home/maria/mikovald/docs/screenshots/01_pc_home.png">
+<div class="page-sec">
+    <div class="sec-title">1. Главная витрина, избранное ❤️ и живая корзина в каталоге (ПК)</div>
+    <div class="shot-wrap"><img class="big-shot" src="file:///home/maria/mikovald/docs/screenshots/01_pc_home.png"></div>
     <ul class="bullets">
-        <li><b>Мгновенный поиск по стандарту Amazon:</b> покупатель выбирает категорию слева от строки поиска и сразу видит нужные позиции, если по запросу нет отдельного товара — система подсказывает научную статью из энциклопедии.</li>
-        <li><b>Чистая навигация без перегруза:</b> основные разделы («Каталог», «Субстраты почвенные», «Наборы и комплекты», «Энциклопедия и лекции») вынесены в компактную панель с выпадающими списками при наведении.</li>
-        <li><b>Витрина акций и выгод:</b> актуальная акция всегда на виду в левой панели, а кнопка «Избранное» со счётчиком работает даже без регистрации.</li>
+        <li><b>Составной поиск по стандарту Amazon:</b> выбор категории слева от строки поиска мгновенно фильтрует позиции, если по запросу нет отдельного товара — система подсказывает статью из энциклопедии.</li>
+        <li><b>Избранное ❤️ без регистрации:</b> нажатие на сердечко на карточке подсвечивает его красным и обновляет счётчик в шапке даже для гостей (при выходе из аккаунта сессия очищается).</li>
+        <li><b>Динамическая кнопка корзины <code>− [🛒 2] +</code>:</b> после добавления товара прямо в каталоге появляются кнопки изменения количества со счётчиком внутри корзины.</li>
     </ul>
 </div>
 
-<div class="section">
-    <div class="sec-title">2. Карточка товара: доверие, остатки и сквозная доставка</div>
-    <img class="big-shot" src="file:///home/maria/mikovald/docs/screenshots/02_pc_product.png">
+<div class="page-sec">
+    <div class="sec-title">2. Карточка товара: галерея, остатки и сквозная доставка</div>
+    <div class="shot-wrap"><img class="big-shot" src="file:///home/maria/mikovald/docs/screenshots/02_pc_product.png"></div>
     <ul class="bullets">
-        <li><b>Галерея как на крупных маркетплейсах:</b> миниатюры слева, крупное фото с увеличением по клику и кнопка «Избранное» (♡ / ❤️) прямо на карточке.</li>
-        <li><b>Реальный складской учёт:</b> покупатель видит фактический остаток на складе; система не даёт заказать больше наличия и автоматически списывает товар при оформлении заказа.</li>
+        <li><b>Галерея по стандарту маркетплейсов:</b> миниатюры слева, крупное фото с увеличением по клику и кнопка «Избранное» прямо на карточке.</li>
+        <li><b>Контроль складских остатков:</b> покупатель видит фактическое наличие на складе; система блокирует заказ сверх остатка и автоматически списывает товар при покупке.</li>
         <li><b>Сквозной выбор доставки:</b> выбранный способ получения (Почта России, СДЭК или Самовывоз) запоминается на всех карточках товаров и автоматически переносится в корзину.</li>
     </ul>
 </div>
 
-<div class="section">
-    <div class="sec-title">3. Умная корзина, расчёт акций и автоподсказки адресов РФ</div>
-    <img class="big-shot" src="file:///home/maria/mikovald/docs/screenshots/03_pc_cart.png">
+<div class="page-sec">
+    <div class="sec-title">3. Умная корзина, расчёт акций и автоподсказки адресов с квартирами</div>
+    <div class="shot-wrap"><img class="big-shot" src="file:///home/maria/mikovald/docs/screenshots/03_pc_cart.png"></div>
     <ul class="bullets">
-        <li><b>Прозрачная выгода для клиента:</b> система автоматически применяет максимальную скидку (например, <b>10% по акции</b> вместо базовой <b>5%</b> для зарегистрированных покупателей) и наглядно показывает экономию в рублях.</li>
-        <li><b>Ввод адреса за 3 секунды:</b> при вводе 6-значного почтового индекса РФ автоматически подставляется город и открывается прокручиваемый список улиц с выбором стрелками клавиатуры (<code>↓ / ↑ / Enter</code>) и подсказкой домов, корпусов и строений.</li>
+        <li><b>Прозрачный расчёт выгоды:</b> система автоматически применяет максимальную скидку (например, <b>10% по акции</b> вместо базовой <b>5%</b> для зарегистрированных покупателей).</li>
+        <li><b>Автозаполнение адреса, дома и квартиры:</b> при вводе 6-значного индекса РФ автоматически подставляется город и открывается прокручиваемый список улиц, домов, корпусов и квартир (<code>кв.</code>) с навигацией стрелками клавиатуры (<code>↓ / ↑ / Enter</code>).</li>
     </ul>
 </div>
 
-<div class="section">
+<div class="page-sec">
     <div class="sec-title">4. Адаптивная мобильная версия для покупок со смартфона</div>
     <div class="mob-row">
-        <div class="mob-card"><img src="file:///home/maria/mikovald/docs/screenshots/05_mob_home.png"><div>Главный экран: акция сверху, сетка 2 товара в ряд и онлайн-чат</div></div>
+        <div class="mob-card"><img src="file:///home/maria/mikovald/docs/screenshots/05_mob_home.png"><div>Главный экран: акция сверху, сетка 2 товара в ряд и чат</div></div>
         <div class="mob-card"><img src="file:///home/maria/mikovald/docs/screenshots/06_mob_product.png"><div>Карточка товара: крупные кнопки, доставка и избранное</div></div>
     </div>
     <ul class="bullets">
-        <li><b>Максимум товаров на первом экране:</b> на смартфоне активная акция выносится компактным баннером сразу под меню, а за ней идёт удобная сетка 2 товара в ряд с крупными кнопками корзины.</li>
-        <li><b>Живой онлайн-чат с производителем:</b> плавающая кнопка в правом нижнем углу открывает компактный чат без обязательной регистрации; владельцу приходят уведомления на почту, а неактивные чаты старше 24 часов очищаются автоматически.</li>
+        <li><b>Приоритет каталога на первом экране:</b> на смартфоне активная акция выносится баннером сразу под меню, а за ней идёт компактная сетка 2 товара в ряд с крупными кнопками корзины.</li>
+        <li><b>Встроенный онлайн-чат:</b> кнопка в правом нижнем углу открывает компактный чат без обязательной регистрации; неактивные диалоги старше 24 часов удаляются автоматически.</li>
     </ul>
 </div>
 
-<div class="section">
+<div class="page-sec">
     <div class="sec-title">5. Энциклопедия знаний и встроенный кабинет управления бизнесом</div>
-    <img class="big-shot" src="file:///home/maria/mikovald/docs/screenshots/04_pc_encyclopedia.png">
+    <div class="shot-wrap"><img class="big-shot" src="file:///home/maria/mikovald/docs/screenshots/04_pc_encyclopedia.png"></div>
     <ul class="bullets">
-        <li><b>Экспертный контент повышает конверсию:</b> научные лекции и рекомендации по применению связаны с каталогом и формируют доверие как у частных садоводов, так и у крупных фермерских хозяйств.</li>
-        <li><b>Всё управление в одном окне:</b> конструктор акций по категориям, аналитика упущенного спроса, автоматическая выгрузка книги учёта доходов и расходов (<b>КУДиР для ФНС</b>), юридический фильтр стоп-слов <b>109-ФЗ</b> и защита <b>2FA</b>.</li>
+        <li><b>Экспертный контент:</b> научные лекции и рекомендации по применению связаны с каталогом и повышают доверие частных садоводов и фермерских хозяйств.</li>
+        <li><b>Управление и защита в одном окне:</b> конструктор акций по категориям, аналитика упущенного спроса, выгрузка <b>КУДиР для ФНС</b>, фильтр стоп-слов <b>109-ФЗ</b>, защита <b>2FA</b> и кнопка отката изменений (<code>Undo</code>).</li>
     </ul>
     <div class="badge-row">
         <span class="pill">Python FastAPI + Docker</span>

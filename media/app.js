@@ -384,15 +384,18 @@
         let sp = new URLSearchParams(location.search);
         if (sp.get('demo_showcase') === '1') {
             let favBtns = document.querySelectorAll('.fav-heart');
-            if (favBtns && !JSON.parse(localStorage.getItem('mico_favs') || '[]').length) {
+            if (favBtns.length > 0 && !JSON.parse(localStorage.getItem('mico_favs') || '[]').length) {
                 window.toggleFavBtn(favBtns);
             }
             let cartBtns = document.querySelectorAll('.btn-cart[data-pid]');
-            let targetBtn = cartBtns || cartBtns;
+            let targetBtn = cartBtns.length > 1 ? cartBtns : cartBtns;
             if (targetBtn && !getCleanCart().length) {
                 window.addCartBtn(targetBtn, 2);
             }
         }
-    });
+        if (sp.get('demo_chat') === '1') {
+            let cw = document.getElementById('chat-win');
+            if (cw) cw.style.display = 'flex';
+        }    });
 
 })();

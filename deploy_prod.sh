@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 DOMAIN="${1:-micovald.ru}"
-EMAIL="${2:-micovald@yandex.ru}"
+EMAIL="${2:-contact@example.com}"
 echo "=== Развёртывание MICOVALD на боевом сервере: https://$DOMAIN ==="
 
 if ! command -v docker &> /dev/null; then

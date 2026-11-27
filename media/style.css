@@ -90,3 +90,5 @@ header { background: linear-gradient(135deg, #0E2B20 0%, #184734 100%); color: #
     .layout-grid > .grid { order: 2 !important; width: 100% !important; }
     .layout-grid > aside > *:not(#promo-box) { order: 3 !important; width: 100% !important; }
 }
+
+.amz-acc { align-items: flex-start !important; text-align: left !important; }
